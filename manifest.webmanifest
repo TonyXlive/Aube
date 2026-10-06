@@ -17,6 +17,7 @@
     {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "shortcuts": [
+    {"name": "Écouter le brief", "url": "./#ecouter", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
     {"name": "Alertes", "url": "./#alertes", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
   ]
 }

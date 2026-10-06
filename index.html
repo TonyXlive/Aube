@@ -216,6 +216,49 @@ main{padding:6px 16px 0;display:flex;flex-direction:column;gap:26px}
 main{zoom:var(--z,1)}.sheet>*:not(.grab):not(.sclose){zoom:var(--z,1)}
 .sclose{position:sticky;top:0;float:right;margin:-4px -6px 0 0;width:34px;height:34px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-2);z-index:2}
 .sclose svg{width:16px;height:16px}
+/* ---------- podcast ---------- */
+.listenbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px 0 12px;border-radius:999px;background:rgba(255,255,255,.18);color:#fff;font-weight:700;font-size:14px;border:1px solid rgba(255,255,255,.35)}
+.listenbtn svg{width:17px;height:17px}
+.herobtns{display:flex;gap:8px;flex-wrap:wrap}
+.player{border-radius:24px;padding:20px;color:#fff;background:radial-gradient(110% 80% at 100% 0%,rgba(255,181,71,.9),transparent 55%),radial-gradient(110% 90% at 0% 100%,rgba(124,92,255,.95),transparent 60%),linear-gradient(160deg,#ff7a59,#b23c7c 55%,#3a24b0);display:flex;flex-direction:column;gap:14px}
+.player .eyebrow{color:rgba(255,255,255,.82)}
+.player h2{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:-.03em;margin:0;line-height:1.08}
+.player .now{font-size:14px;color:rgba(255,255,255,.9);min-height:20px}
+.scrub{width:100%;accent-color:#fff;height:22px;margin:0}
+.ptimes{display:flex;justify-content:space-between;font-family:var(--f-mono);font-size:12px;color:rgba(255,255,255,.85);margin-top:-8px;font-variant-numeric:tabular-nums}
+.pctl{display:flex;align-items:center;justify-content:center;gap:18px}
+.pctl button{color:#fff;display:grid;place-items:center}
+.pctl .sm{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.16);font-family:var(--f-mono);font-size:11px;font-weight:700;position:relative}
+.pctl .sm svg{width:22px;height:22px}
+.pctl .big{width:72px;height:72px;border-radius:50%;background:#fff;color:#3a24b0;box-shadow:0 10px 26px rgba(30,10,80,.35)}
+.pctl .big svg{width:30px;height:30px}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pchip{height:32px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+.pchip svg{width:14px;height:14px}
+.chaps{display:flex;flex-direction:column;gap:6px}
+.chap{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border-radius:14px;padding:11px 13px;box-shadow:var(--shadow)}
+.chap .ts{font-family:var(--f-mono);font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.chap b{font-weight:600;font-size:14.5px}
+.chap.on{outline:2px solid var(--accent)}
+.chap.on .ts{color:var(--accent)}
+.chap .eq{display:none;gap:2px;align-items:flex-end;height:14px}
+.chap.on .eq{display:flex}
+.chap .eq i{width:3px;background:var(--accent);border-radius:2px;animation:eq 1s ease-in-out infinite}
+.chap .eq i:nth-child(2){animation-delay:.2s}.chap .eq i:nth-child(3){animation-delay:.4s}
+.paused .chap .eq i{animation-play-state:paused}
+@keyframes eq{0%,100%{height:4px}50%{height:14px}}
+.mini{position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:29;padding:0 12px}
+.mini>div{max-width:456px;margin:0 auto;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);border-radius:16px;padding:8px 8px 8px 12px;box-shadow:0 10px 30px rgba(0,0,0,.25);position:relative;overflow:hidden}
+.mini .mt{flex:1;min-width:0;font-size:13px;line-height:1.25}
+.mini .mt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .mt span{font-size:11.5px;opacity:.7}
+.mini button.mp{width:40px;height:40px;border-radius:12px;background:var(--bg);color:var(--ink);display:grid;place-items:center;flex:none}
+.mini button.mp svg{width:18px;height:18px}
+.mini .mbar{position:absolute;left:0;bottom:0;height:3px;background:var(--accent)}
+.app.withmini{padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.offl{font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.offl .ok{color:var(--savoir);font-weight:700}
+.tabs nav{grid-template-columns:repeat(5,1fr)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -236,6 +279,7 @@ main{zoom:var(--z,1)}.sheet>*:not(.grab):not(.sclose){zoom:var(--z,1)}
 
 <div class="tabs"><nav aria-label="Navigation">
   <button class="tab" data-view="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Brief</button>
+  <button class="tab" data-view="listen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="14" width="4" height="7" rx="2"/><rect x="17" y="14" width="4" height="7" rx="2"/></svg>Écouter</button>
   <button class="tab" data-view="alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>Alertes<span class="badge" id="alertBadge" hidden></span></button>
   <button class="tab" data-view="saved"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Favoris</button>
   <button class="tab" data-view="archive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Éditions</button>
@@ -244,6 +288,8 @@ main{zoom:var(--z,1)}.sheet>*:not(.grab):not(.sclose){zoom:var(--z,1)}
 <div class="scrim" id="scrim"></div>
 <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sTitle"></section>
 <div class="toast" id="toast"></div>
+<div class="mini" id="mini" hidden></div>
+<audio id="au" preload="none"></audio>
 <div class="flash" id="flash" hidden role="dialog" aria-label="Le Flash"></div>
 <div class="ptr" id="ptr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></div>
 
@@ -320,7 +366,7 @@ function renderHome(){const e=S.cur;const arts=articles();let h="";
   h+=`<section class="hero"><div class="eyebrow">${esc(greet())} · ${esc(fmtDate(e.date))}</div>
    <h1>${esc(e.headline||"L'essentiel du jour")}</h1><p class="sub">${esc(e.tagline||"Le monde en 30 secondes")}</p>
    ${wxHTML()}
-   <div class="herorow" style="margin:0 0 14px"><button class="flashbtn" id="flashBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Le Flash · ${flashList().length} news</button>
+   <div class="herorow" style="margin:0 0 14px"><div class="herobtns">${e.podcast?`<button class="listenbtn" data-view="listen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><rect x="3" y="14" width="4" height="7" rx="2"/><rect x="17" y="14" width="4" height="7" rx="2"/></svg>Écouter · ${Math.round(e.podcast.duration/60)} min</button>`:""}<button class="flashbtn" id="flashBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Le Flash · ${flashList().length}</button></div>
    <div class="prog"><span>${nRead(arts)}/${arts.length} lues · ≈ ${readMins(arts)} min de lecture</span><div class="bar"><i style="width:${arts.length?Math.round(nRead(arts)/arts.length*100):0}%"></i></div></div>
    <ol class="thirty">${(e.thirty||[]).map((t,i)=>`<li><b>0${i+1}</b><span>${esc(t)}</span></li>`).join("")}</ol></div>
    <div class="meta">Édition générée ${e.generatedAt?esc(new Date(e.generatedAt).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})):""}</div></section>`;
@@ -355,7 +401,8 @@ function render(){
  $("#chips").parentElement.querySelector(".chips").style.display=S.view==="home"?"":"none";
  $(".search").style.display=S.view==="home"?"":"none";
  renderChips();
- m.innerHTML=S.view==="home"?renderHome():S.view==="alerts"?renderAlerts():S.view==="saved"?renderSaved():renderArchive();
+ m.innerHTML=S.view==="home"?renderHome():S.view==="listen"?renderListen():S.view==="alerts"?renderAlerts():S.view==="saved"?renderSaved():renderArchive();
+ if(S.view==="listen")syncPlayer();renderMini();
 }
 
 function openSheet(k){const a=allArticles().find(x=>keyOf(x)===k);if(!a)return;markRead(k);document.querySelectorAll(`[data-open="${CSS.escape(k)}"]`).forEach(n=>n.classList.add("read"));const c=CAT[a.cat]||CAT.all;const sv=!!S.saved[k];
@@ -436,6 +483,79 @@ function addToCal(a){const d=a.date.replace(/-/g,"");const [y,m,dd]=a.date.split
  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Aube//FR","BEGIN:VEVENT","UID:"+d+"-"+Math.random().toString(36).slice(2)+"@aube","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z","DTSTART;VALUE=DATE:"+d,"DTEND;VALUE=DATE:"+d2,"SUMMARY:"+clean(a.title),"DESCRIPTION:"+clean((a.detail||"")+(a.url?" "+a.url:"")),"BEGIN:VALARM","TRIGGER:-PT15H","ACTION:DISPLAY","DESCRIPTION:"+clean(a.title),"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
  const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));const l=document.createElement("a");l.href=url;l.download=(a.title.slice(0,40).replace(/[^\w\- ]+/g,"").trim()||"alerte")+".ics";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(url);l.remove()},1500);toast("Ouvre le fichier pour l'ajouter à ton agenda")}
 
+/* ---------- podcast audio ---------- */
+const AU=$("#au");const P={ed:null,src:"",tts:false,rate:ls("aube_rate",1)||1};
+const IC={play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',pause:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',fwd:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>',
+ prev:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>',next:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>',
+ dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>'};
+function fmtT(x){x=Math.max(0,Math.floor(x||0));return Math.floor(x/60)+":"+String(x%60).padStart(2,"0")}
+function absURL(u){return new URL(u,location.href).href}
+function chapters(){return (P.ed&&P.ed.podcast&&P.ed.podcast.chapters)||[]}
+function curChap(t){const c=chapters();let i=0;c.forEach((x,j)=>{if(t>=x.t-0.05)i=j});return i}
+function dur(){return (isFinite(AU.duration)&&AU.duration>0)?AU.duration:(P.ed&&P.ed.podcast?P.ed.podcast.duration:0)}
+function ensureLoaded(){const e=S.cur;if(!e||!e.podcast)return false;
+ if(P.src!==e.podcast.src){P.ed=e;P.src=e.podcast.src;AU.src=e.podcast.src;AU.preload="metadata";AU.playbackRate=P.rate;const pos=ls("aube_pos",{})[P.src];if(pos&&pos<e.podcast.duration-5){AU.currentTime=pos;AU.addEventListener("loadedmetadata",()=>{AU.currentTime=pos},{once:true})}setMeta()}
+ return true}
+function playPause(){if(!ensureLoaded())return;if(AU.paused){AU.playbackRate=P.rate;AU.play().catch(()=>toast("Lecture impossible pour l'instant"))}else AU.pause()}
+function seekTo(t){if(!ensureLoaded())return;AU.currentTime=Math.max(0,Math.min(dur()-0.5,t))}
+function jumpChap(d){const c=chapters();if(!c.length)return;let i=curChap(AU.currentTime);if(d<0&&AU.currentTime-c[i].t>4)d=0;i=Math.max(0,Math.min(c.length-1,i+d));seekTo(c[i].t+0.01);if(AU.paused)playPause()}
+function setMeta(){if(!("mediaSession" in navigator)||!P.ed)return;const c=chapters()[curChap(AU.currentTime)];
+ navigator.mediaSession.metadata=new MediaMetadata({title:c?c.title:"Le brief audio",artist:"Aube · "+fmtDate(P.ed.date,{weekday:"long",day:"numeric",month:"long"}),album:"Aube",artwork:[{src:absURL("icons/icon-192.png"),sizes:"192x192",type:"image/png"},{src:absURL("icons/icon-512.png"),sizes:"512x512",type:"image/png"}]})}
+if("mediaSession" in navigator){const ms=navigator.mediaSession;const h=(a,f)=>{try{ms.setActionHandler(a,f)}catch(e){}};
+ h("play",()=>playPause());h("pause",()=>AU.pause());h("seekbackward",d=>seekTo(AU.currentTime-((d&&d.seekOffset)||15)));h("seekforward",d=>seekTo(AU.currentTime+((d&&d.seekOffset)||30)));
+ h("previoustrack",()=>jumpChap(-1));h("nexttrack",()=>jumpChap(1));h("seekto",d=>seekTo(d.seekTime))}
+let lastChap=-1,lastSave=0;
+AU.addEventListener("timeupdate",()=>{const t=AU.currentTime;const i=curChap(t);if(i!==lastChap){lastChap=i;setMeta();document.querySelectorAll(".chap").forEach((n,j)=>n.classList.toggle("on",j===i));const nw=$("#pNow");if(nw)nw.textContent=chapters()[i]?chapters()[i].title:""}
+ const sc=$("#pScrub");if(sc&&!sc.dragging){sc.max=dur();sc.value=t}const tt=$("#pT");if(tt)tt.textContent=fmtT(t);const tr=$("#pR");if(tr)tr.textContent="-"+fmtT(dur()-t);
+ const mb=$("#miniBar");if(mb)mb.style.width=(dur()?t/dur()*100:0)+"%";const mc=$("#miniChap");if(mc&&chapters()[i])mc.textContent=chapters()[i].title;
+ if(Date.now()-lastSave>4000){lastSave=Date.now();const pos=ls("aube_pos",{});pos[P.src]=t;const ks=Object.keys(pos);if(ks.length>10)delete pos[ks[0]];lsSet("aube_pos",pos);try{navigator.mediaSession.setPositionState({duration:dur(),position:Math.min(t,dur()),playbackRate:AU.playbackRate})}catch(e){}}});
+["play","pause"].forEach(ev=>AU.addEventListener(ev,()=>{const on=!AU.paused;document.querySelectorAll("[data-pp]").forEach(b=>b.innerHTML=on?IC.pause:IC.play);const pl=$(".listenwrap");pl&&pl.classList.toggle("paused",!on);try{navigator.mediaSession.playbackState=on?"playing":"paused"}catch(e){}renderMini()}));
+AU.addEventListener("ended",()=>{const pos=ls("aube_pos",{});delete pos[P.src];lsSet("aube_pos",pos);toast("Fin du brief audio · bonne journée ☀️");renderMini()});
+AU.addEventListener("error",()=>{if(AU.src&&!navigator.onLine)toast("Podcast non téléchargé : reconnecte-toi")});
+
+function renderListen(){const e=S.cur;
+ if(!e.podcast)return `<div class="empty"><div class="sun" style="margin:0 auto"><i></i></div><h3>Pas de podcast pour cette édition</h3><p>Le brief audio est préparé chaque nuit avec l'édition. Tu peux quand même te faire lire les titres par la voix du téléphone.</p><button class="cta" id="ttsBtn" style="margin-top:16px">${speechSynthesis&&speechSynthesis.speaking?"Arrêter la lecture":"Lire avec la voix du téléphone"}</button></div>`;
+ ensureLoaded();const c=chapters();const d=dur();const t=AU.currentTime||0;const i=curChap(t);
+ return `<div class="listenwrap ${AU.paused?"paused":""}" style="display:flex;flex-direction:column;gap:18px">
+ <section class="player"><div class="eyebrow">Le brief audio · ${esc(fmtDate(e.date))}</div><h2>${esc(e.headline||"L'essentiel du jour")}</h2>
+  <div class="now" id="pNow">${esc(c[i]?c[i].title:"")}</div>
+  <input type="range" class="scrub" id="pScrub" min="0" max="${d}" step="1" value="${t}" aria-label="Position">
+  <div class="ptimes"><span id="pT">${fmtT(t)}</span><span id="pR">-${fmtT(d-t)}</span></div>
+  <div class="pctl"><button class="sm" id="pPrev" aria-label="Chapitre précédent">${IC.prev}</button><button class="sm" id="pBack" aria-label="Reculer de 15 secondes">${IC.back}</button>
+   <button class="big" id="pPlay" data-pp aria-label="Lecture ou pause">${AU.paused?IC.play:IC.pause}</button>
+   <button class="sm" id="pFwd" aria-label="Avancer de 30 secondes">${IC.fwd}</button><button class="sm" id="pNext" aria-label="Chapitre suivant">${IC.next}</button></div>
+  <div class="prow"><button class="pchip" id="pRate">Vitesse ×${String(P.rate).replace(".",",")}</button><button class="pchip" id="pSleep">${P.sleepAt?"Arrêt dans "+Math.max(1,Math.round((P.sleepAt-Date.now())/60000))+" min":"Minuteur"}</button><span class="pchip">${Math.round(d/60)} min · ${c.length} chapitres</span></div>
+ </section>
+ <div class="offl" id="offl">Vérification du téléchargement…</div>
+ <section><div class="sec-h"><h2>Chapitres</h2><span>touche pour y aller</span></div><div class="chaps">${c.map((x,j)=>`<button class="chap${j===i?" on":""}" data-chap="${j}"><span class="ts">${fmtT(x.t)}</span><b>${esc(x.title)}</b><span class="eq"><i></i><i></i><i></i></span></button>`).join("")}</div></section>
+ <div class="note">Le podcast continue de jouer écran verrouillé, et se pilote depuis les notifications ou des écouteurs Bluetooth. Il est téléchargé automatiquement pour être écouté sans réseau, dans le métro par exemple.</div></div>`}
+function syncPlayer(){const e=S.cur;
+ if(!e.podcast){const b=$("#ttsBtn");if(b)b.onclick=()=>ttsToggle();return}
+ $("#pPlay").onclick=playPause;$("#pBack").onclick=()=>seekTo(AU.currentTime-15);$("#pFwd").onclick=()=>seekTo(AU.currentTime+30);$("#pPrev").onclick=()=>jumpChap(-1);$("#pNext").onclick=()=>jumpChap(1);
+ const sc=$("#pScrub");sc.addEventListener("input",()=>{sc.dragging=true;$("#pT").textContent=fmtT(+sc.value)});sc.addEventListener("change",()=>{sc.dragging=false;seekTo(+sc.value)});
+ $("#pRate").onclick=()=>{const R=[1,1.15,1.3,1.5,0.9];P.rate=R[(R.indexOf(P.rate)+1)%R.length];AU.playbackRate=P.rate;lsSet("aube_rate",P.rate);$("#pRate").textContent="Vitesse ×"+String(P.rate).replace(".",",")};
+ $("#pSleep").onclick=()=>{const O=[0,10,20,30];const cur=P.sleepMin||0;P.sleepMin=O[(O.indexOf(cur)+1)%O.length];clearTimeout(P.sleepT);if(P.sleepMin){P.sleepAt=Date.now()+P.sleepMin*60000;P.sleepT=setTimeout(()=>{AU.pause();P.sleepAt=0;P.sleepMin=0;toast("Minuteur terminé")},P.sleepMin*60000);toast("Arrêt dans "+P.sleepMin+" min")}else{P.sleepAt=0;toast("Minuteur désactivé")}$("#pSleep").textContent=P.sleepMin?"Arrêt dans "+P.sleepMin+" min":"Minuteur"};
+ document.querySelectorAll("[data-chap]").forEach(b=>b.onclick=()=>{seekTo(chapters()[+b.dataset.chap].t+0.01);if(AU.paused)playPause()});
+ offlineStatus()}
+async function offlineStatus(){const o=$("#offl");if(!o||!S.cur.podcast)return;if(!("caches" in window)){o.textContent="";return}
+ const c=await caches.open("aube-audio");const hit=await c.match(absURL(S.cur.podcast.src));
+ if(hit)o.innerHTML=`<span class="ok">✓ Disponible hors connexion</span><span>${(S.cur.podcast.duration/60).toFixed(0)} min</span>`;
+ else{o.innerHTML=`<button class="pchip" style="background:var(--accent);color:var(--accent-ink)" id="dlBtn">${IC.dl}Télécharger pour le métro</button>`;$("#dlBtn").onclick=async()=>{o.textContent="Téléchargement…";await cacheAudio(true);offlineStatus()}}}
+async function cacheAudio(force){try{const e=S.cur;if(!e||!e.podcast||!("caches" in window))return;if(!force&&navigator.connection&&navigator.connection.saveData)return;
+ const c=await caches.open("aube-audio");const u=absURL(e.podcast.src);if(await c.match(u))return;const r=await fetch(u,{cache:"no-store"});if(!r.ok)return;await c.put(u,r);
+ const keys=await c.keys();const keep=keys.map(k=>k.url).sort().reverse().slice(0,3);for(const k of keys)if(!keep.includes(k.url))await c.delete(k)}catch(x){if(force)toast("Téléchargement impossible : vérifie ta connexion")}}
+function renderMini(){const mi=$("#mini");const show=P.src&&S.view!=="listen"&&(!AU.paused||AU.currentTime>0)&&!AU.ended;
+ mi.hidden=!show;$(".app").classList.toggle("withmini",!!show);if(!show)return;const c=chapters()[curChap(AU.currentTime)];
+ mi.innerHTML=`<div><div class="mt" data-view="listen" role="button"><b id="miniChap">${esc(c?c.title:"Le brief audio")}</b><span>Aube · ${esc(fmtDate(P.ed.date,{day:"numeric",month:"short"}))}</span></div><button class="mp" data-pp aria-label="Lecture ou pause">${AU.paused?IC.play:IC.pause}</button><i class="mbar" id="miniBar" style="width:${dur()?AU.currentTime/dur()*100:0}%"></i></div>`;
+ mi.querySelector(".mp").onclick=e=>{e.stopPropagation();playPause()}}
+
+/* voix du téléphone (secours, quand une édition n'a pas de podcast) */
+function ttsToggle(){if(!("speechSynthesis" in window)){toast("Ton téléphone ne propose pas de voix de lecture");return}
+ if(speechSynthesis.speaking){speechSynthesis.cancel();render();return}
+ const e=S.cur;const parts=[`Brief du ${fmtDate(e.date)}.`,...(e.thirty||[])];CATS.filter(c=>c.id!=="all"&&!S.hidden.includes(c.id)).forEach(c=>{const l=allArticles().filter(a=>a.cat===c.id);if(l.length){parts.push(c.label+".");l.forEach(a=>parts.push(a.title+". "+a.summary))}});
+ const v=speechSynthesis.getVoices().find(v=>/^fr/i.test(v.lang));parts.forEach((t,i)=>{const u=new SpeechSynthesisUtterance(t);u.lang="fr-FR";if(v)u.voice=v;u.rate=P.rate;if(i===parts.length-1)u.onend=()=>render();speechSynthesis.speak(u)});render()}
+
 /* ---------- réglages ---------- */
 function openSettings(){$("#sheet").innerHTML=`<div class="grab"></div><button class="sclose" data-close="1" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="set"><h2 id="sTitle" style="margin-top:4px">Réglages</h2>
  <h3>Mes catégories</h3><div class="togs">${CATS.filter(c=>!["all","une"].includes(c.id)).map(c=>`<button class="tog" data-tog="${c.id}" aria-pressed="${!S.hidden.includes(c.id)}" style="--c:${c.c}"><span class="dot"></span>${esc(c.label)}</button>`).join("")}</div>
@@ -481,8 +601,8 @@ let deferred=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();
 $("#installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice.catch(()=>{});deferred=null;$("#installBtn").hidden=true};
 addEventListener("appinstalled",()=>{$("#installBtn").hidden=true;toast("Aube est installée")});
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
-if(location.hash==="#alertes")S.view="alerts";
-boot(false);loadWx();
+if(location.hash==="#alertes")S.view="alerts";if(location.hash==="#ecouter")S.view="listen";
+boot(false).then(()=>{cacheAudio(false)});loadWx();
 </script>
 
 </body>
