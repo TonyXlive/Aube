@@ -7,7 +7,7 @@ Essaie d'abord l'API Interactions (modèles 3.8), puis l'ancien format generateC
 import base64, io, json, os, re, sys, time, urllib.error, urllib.request, wave
 
 API = "https://generativelanguage.googleapis.com/v1beta"
-MODELES = [m for m in os.environ.get("GEMINI_TTS_MODELS", "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts,gemini-2.5-flash-preview-tts").split(",") if m]
+MODELES = [m for m in os.environ.get("GEMINI_TTS_MODELS", "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts").split(",") if m]
 VOIX = {"Léa": os.environ.get("GEMINI_VOICE_A", "Aoede"), "Hugo": os.environ.get("GEMINI_VOICE_B", "Puck")}
 STYLE = {
     "Léa": "voix féminine française, animatrice de matinale radio, ton détendu, souriant et complice, débit naturel avec de légères variations",
@@ -17,7 +17,7 @@ CONSIGNE = ("Émission d'actualité matinale en français de France, entre deux 
             "Conversation vivante et naturelle : vraies intonations de dialogue, petites respirations, "
             "relances spontanées, débit posé et détendu, jamais de ton de lecture.")
 
-def _post(url, body, key, timeout=240):
+def _post(url, body, key, timeout=600):
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), method="POST",
                                  headers={"Content-Type": "application/json", "x-goog-api-key": key})
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -82,7 +82,8 @@ def dialogue(turns, path):
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY absente")
-    essais = [ETAT["ok"]] if ETAT["ok"] else [(m, "generate" if "2.5" in m else "interactions") for m in MODELES]
+    tous = [(m, "generate" if "2.5" in m else "interactions") for m in MODELES]
+    essais = ([ETAT["ok"]] + [x for x in tous if x != ETAT["ok"]]) if ETAT["ok"] else tous
     derniere = None
     for model, fmt in essais:
         for tentative in range(4):
@@ -96,6 +97,8 @@ def dialogue(turns, path):
                 derniere = f"{model}/{fmt} HTTP {e.code} {msg}"
                 if len(ETAT["erreurs"]) < 6: ETAT["erreurs"].append(derniere[:240])
                 print("  gemini :", derniere, file=sys.stderr)
+                if e.code == 429 and "per day" in msg:
+                    break  # quota du jour épuisé pour ce modèle : on passe au suivant
                 if e.code in (429, 500, 502, 503, 504):
                     time.sleep(min(60, 8 * (tentative + 1)))
                     continue
@@ -104,6 +107,4 @@ def dialogue(turns, path):
                 derniere = f"{model}/{fmt} {type(e).__name__}: {e}"
                 print("  gemini :", derniere, file=sys.stderr)
                 time.sleep(5)
-        if ETAT["ok"]:
-            break
     raise RuntimeError("Gemini TTS indisponible : " + str(derniere))

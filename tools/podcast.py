@@ -101,10 +101,6 @@ def build_chapters(ed):
                               "Bonne journée, et à demain matin."]))
     return ch
 
-# Voix neuronales : A = Léa, B = Hugo. Les voix « Multilingual » sont plus expressives ;
-# si elles ne répondent pas, on bascule sur les voix françaises classiques.
-VOIX = {"A": ["fr-FR-VivienneMultilingualNeural", "fr-FR-DeniseNeural"],
-        "B": ["fr-FR-RemyMultilingualNeural", "fr-FR-HenriNeural"]}
 VOIX_KO = set()
 VOIX_OK = set()
 MODELE_OK = set()
@@ -124,78 +120,6 @@ def light(t):
     t = re.sub(r"\bOL\b", "l'OL", t).replace("l'l'OL", "l'OL").replace("Lens – l'OL", "Lens contre l'OL")
     t = t.replace(" – ", ", ").replace(" — ", ", ")
     return re.sub(r"\s+", " ", t).strip()
-
-def edge_synth(segments, out, rate):
-    """segments : liste de (locuteur A/B, texte). Produit un mp3 par réplique puis les assemble."""
-    import asyncio, edge_tts
-    tmp = tempfile.mkdtemp()
-    files = []
-    async def go():
-        for i, (v, txt) in enumerate(segments):
-            if not txt.strip():
-                continue
-            f = os.path.join(tmp, f"s{i:03d}.mp3")
-            ok = False
-            for voix in [x for x in VOIX.get(v, [v]) if x not in VOIX_KO]:
-                for essai in range(3):
-                    try:
-                        await edge_tts.Communicate(txt, voix, rate=rate).save(f)
-                        ok = os.path.getsize(f) > 1000
-                        if ok:
-                            VOIX_OK.add(voix)
-                            break
-                    except Exception as e:
-                        print(f"  {voix} : essai {essai+1} raté ({type(e).__name__})", file=sys.stderr)
-                        await asyncio.sleep(2)
-                if ok:
-                    break
-                VOIX_KO.add(voix)
-            if not ok:
-                raise RuntimeError("aucune voix neuronale disponible")
-            files.append(f)
-    asyncio.run(go())
-    gap = os.path.join(tmp, "gap.wav")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
-                    "-t", "0.42", "-sample_fmt", "s16", gap], check=True)
-    gap_q = os.path.join(tmp, "gapq.wav")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
-                    "-t", "0.16", "-sample_fmt", "s16", gap_q], check=True)
-    textes = [t for _, t in segments if t.strip()]
-    wavs = []
-    for k, f in enumerate(files):
-        w = f[:-4] + ".wav"
-        # on coupe les silences de début/fin de chaque réplique pour un enchaînement plus vif
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f, "-af",
-                        "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse",
-                        "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", w], check=True)
-        # après une question, la réponse arrive vite ; sinon une respiration normale
-        wavs += [w, gap_q if k < len(textes) and textes[k].rstrip().endswith("?") else gap]
-    lst = os.path.join(tmp, "l.txt")
-    with open(lst, "w") as fh:
-        for f in wavs:
-            fh.write(f"file '{f}'\n")
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
-                    "-ac", "1", "-ar", "24000", out], check=True)
-
-def segments_for(title, lines):
-    """Deux voix qui se relaient : Henri présente, Denise et Henri alternent les sujets."""
-    segs, who = [], 0
-    if not lines:
-        return segs
-    segs.append(("A", light(lines[0])))
-    rest = lines[1:]
-    blocks, cur = [], []
-    for x in rest:
-        if x == "":
-            blocks.append(cur); cur = []
-        else:
-            cur.append(x)
-    if cur:
-        blocks.append(cur)
-    for b in blocks:
-        who = 1 - who if title not in ("Introduction", "Conclusion") else 0
-        segs.append(("AB"[who], light(" ".join(b))))
-    return segs
 
 def script_chapters(ed):
     """Script radio écrit par l'IA : {"chapters":[{"title":..,"lines":[{"who":"A","text":..}]}]}"""
@@ -223,6 +147,66 @@ def wav_dur(p):
     with wave.open(p) as w:
         return w.getnframes() / w.getframerate()
 
+def _silences(path):
+    """Milieux des silences (> 0,25 s) d'un fichier audio, en secondes."""
+    r = subprocess.run(["ffmpeg", "-i", path, "-af", "silencedetect=n=-38dB:d=0.25", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    st, out = None, []
+    for line in r.stderr.splitlines():
+        m = re.search(r"silence_start: ([\d.]+)", line)
+        if m: st = float(m.group(1))
+        m = re.search(r"silence_end: ([\d.]+)", line)
+        if m and st is not None:
+            out.append((st + float(m.group(1))) / 2); st = None
+    return out
+
+def gemini_chapitres(scripted, ed, tmp, max_mots=700):
+    """Regroupe les chapitres en peu de requêtes (quota gratuit : 10/jour), puis recoupe
+    l'audio en chapitres aux silences les plus proches des frontières estimées."""
+    import gemini_tts
+    nom = {"A": "Léa", "B": "Hugo"}
+    groupes, cur, n = [], [], 0
+    for i, (title, lines) in enumerate(scripted):
+        mots = sum(len(x.split()) for _, x, _ in lines)
+        if cur and n + mots > max_mots:
+            groupes.append(cur); cur, n = [], 0
+        cur.append(i); n += mots
+    if cur:
+        groupes.append(cur)
+    print(f"  gemini : {len(scripted)} chapitres en {len(groupes)} requêtes", file=sys.stderr)
+    fichiers = {}
+    for g, idx in enumerate(groupes):
+        turns = [(nom[w], x.strip(), st) for i in idx for w, x, st in scripted[i][1]]
+        gw = os.path.join(tmp, f"g{g}.wav")
+        MODELE_OK.add(gemini_tts.dialogue(turns, gw))
+        total = wav_dur(gw)
+        nb = sum(len(t.split()) for _, t, _ in turns)
+        if nb / max(total, 1) * 60 > 290:  # débit impossible : l'audio a été tronqué
+            print(f"  gemini : audio tronqué ({total:.0f} s pour {nb} mots), nouvel essai en deux moitiés", file=sys.stderr)
+            moitie = len(turns) // 2
+            g1, g2 = gw[:-4] + "a.wav", gw[:-4] + "b.wav"
+            gemini_tts.dialogue(turns[:moitie], g1); gemini_tts.dialogue(turns[moitie:], g2)
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", g1, "-i", g2, "-filter_complex",
+                            "[0:a][1:a]concat=n=2:v=0:a=1", "-ac", "1", "-ar", "24000", gw], check=True)
+            total = wav_dur(gw)
+        mots = [sum(len(x.split()) for _, x, _ in scripted[i][1]) for i in idx]
+        bornes, cum = [], 0
+        for m in mots[:-1]:
+            cum += m; bornes.append(total * cum / sum(mots))
+        sil = _silences(gw)
+        coupes = []
+        for b in bornes:
+            proches = [s for s in sil if abs(s - b) < 7 and (not coupes or s > coupes[-1] + 1)]
+            coupes.append(min(proches, key=lambda s: abs(s - b)) if proches else b)
+        pts = [0.0] + coupes + [total]
+        for k, i in enumerate(idx):
+            f = os.path.join(tmp, f"c{i:02d}.wav")
+            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", gw, "-ss", f"{pts[k]:.3f}", "-to", f"{pts[k+1]:.3f}",
+                            "-af", "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.15,areverse",
+                            "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", f], check=True)
+            fichiers[i] = f
+    return fichiers
+
 def write_etat(date_ed, engine, ok, extra=None):
     try:
         import gemini_tts
@@ -239,7 +223,7 @@ def main():
     ap.add_argument("edition"); ap.add_argument("--voice", default="")
     ap.add_argument("--out-dir", default="podcast"); ap.add_argument("--length-scale", type=float, default=0.95)
     ap.add_argument("--bitrate", default="28k")
-    ap.add_argument("--engine", choices=["piper", "edge", "gemini"], default="piper")
+    ap.add_argument("--engine", choices=["piper", "gemini"], default="piper")
     ap.add_argument("--rate", default="+4%")
     a = ap.parse_args()
     ed = json.load(open(a.edition, encoding="utf-8"))
@@ -249,21 +233,15 @@ def main():
     tmp = tempfile.mkdtemp()
     parts, meta, t = [], [], 0.0
     sil = os.path.join(tmp, "sil.wav")
+    pre = gemini_chapitres(scripted, ed, tmp) if (scripted and a.engine == "gemini") else {}
     for i, (title, lines) in enumerate(chapters):
         p = os.path.join(tmp, f"c{i:02d}.wav")
         if scripted:
             if a.engine == "gemini":
-                import gemini_tts
-                hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
-                nom = {"A": "Léa", "B": "Hugo"}
-                MODELE_OK.add(gemini_tts.dialogue([(nom[w], x.strip(), st) for w, x, st in lines], p))
-            elif a.engine == "edge":
-                edge_synth([(w, light(x)) for w, x, _ in lines], p, a.rate)
+                p = pre[i]
             else:
                 synth("\n".join(norm(x) for _, x, _ in lines), a.voice, p, a.length_scale)
             lines = [light(x) for _, x, _ in lines]
-        elif a.engine == "edge":
-            edge_synth(segments_for(title, lines), p, a.rate)
         else:
             text = "\n".join(norm(x) for x in lines if x is not None)
             synth(text, a.voice, p, a.length_scale)
@@ -294,15 +272,15 @@ def main():
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as f:
         f.writelines(f"file '{p}'\n" for p in norm_parts)
-    out = os.path.join(a.out_dir, ed["date"] + {"edge": "-v.ogg", "gemini": "-g.ogg"}.get(a.engine, ".ogg"))
+    out = os.path.join(a.out_dir, ed["date"] + {"gemini": "-g.ogg"}.get(a.engine, ".ogg"))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ac", "1", "-ar", "24000",
                     "-c:a", "libopus", "-b:a", a.bitrate, "-application", "voip", out], check=True)
     old = (ed.get("podcast") or {}).get("src")
     ed["podcast"] = {"src": out.replace(os.sep, "/"), "duration": round(t, 1), "chapters": meta,
-                     "voice": {"edge": "neural2" if scripted else "neural", "gemini": "gemini"}.get(a.engine, "piper"),
+                     "voice": "gemini" if a.engine == "gemini" else "piper",
                      "format": "emission" if scripted else "lecture",
-                     "voices": sorted(MODELE_OK) if a.engine == "gemini" else sorted(VOIX_OK)}
+                     "voices": sorted(MODELE_OK) if a.engine == "gemini" else ["piper fr-siwis-medium"]}
     if a.engine == "gemini":
         import gemini_tts
         if gemini_tts.ETAT["erreurs"]:
