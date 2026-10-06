@@ -105,6 +105,7 @@ def build_chapters(ed):
 VOIX = {"A": ["fr-FR-VivienneMultilingualNeural", "fr-FR-DeniseNeural"],
         "B": ["fr-FR-RemyMultilingualNeural", "fr-FR-HenriNeural"]}
 VOIX_KO = set()
+VOIX_OK = set()
 
 def light(t):
     """Normalisation légère pour les voix neuronales (elles lisent bien sigles, % et chiffres)."""
@@ -137,6 +138,7 @@ def edge_synth(segments, out, rate):
                         await edge_tts.Communicate(txt, voix, rate=rate).save(f)
                         ok = os.path.getsize(f) > 1000
                         if ok:
+                            VOIX_OK.add(voix)
                             break
                     except Exception as e:
                         print(f"  {voix} : essai {essai+1} raté ({type(e).__name__})", file=sys.stderr)
@@ -267,7 +269,7 @@ def main():
     old = (ed.get("podcast") or {}).get("src")
     ed["podcast"] = {"src": out.replace(os.sep, "/"), "duration": round(t, 1), "chapters": meta,
                      "voice": ("neural2" if scripted else "neural") if a.engine == "edge" else "piper",
-                     "format": "emission" if scripted else "lecture"}
+                     "format": "emission" if scripted else "lecture", "voices": sorted(VOIX_OK)}
     if old and old != ed["podcast"]["src"] and os.path.exists(old):
         os.remove(old)
     json.dump(ed, open(a.edition, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
