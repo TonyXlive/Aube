@@ -59,7 +59,12 @@ jobs:
               python3 tools/podcast.py "$F" --engine edge --rate=+0% && OK=edge || echo "::warning::Voix Microsoft indisponibles, la version de secours reste en place."
             fi
           fi
-          [ "$OK" = "non" ] && exit 0
+          if [ "$OK" = "non" ]; then
+            if [ -f podcast/etat.json ]; then
+              git add podcast/etat.json && git commit -q -m "État podcast du $LATEST" && git pull -q --rebase origin main && git push -q origin HEAD:main
+            fi
+            exit 0
+          fi
           ls -1 podcast/*.ogg 2>/dev/null | sort -r | tail -n +22 | xargs -r git rm -q
           git add -A
           if git commit -q -m "Podcast ($OK) du $LATEST"; then

@@ -223,6 +223,17 @@ def wav_dur(p):
     with wave.open(p) as w:
         return w.getnframes() / w.getframerate()
 
+def write_etat(date_ed, engine, ok, extra=None):
+    try:
+        import gemini_tts
+        errs = gemini_tts.ETAT["erreurs"]
+    except Exception:
+        errs = []
+    etat = {"date": date_ed, "engine": engine, "ok": ok, "errors": errs}
+    etat.update(extra or {})
+    os.makedirs("podcast", exist_ok=True)
+    json.dump(etat, open("podcast/etat.json", "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("edition"); ap.add_argument("--voice", default="")
@@ -302,4 +313,12 @@ def main():
     print(f"{out} · {t/60:.1f} min · {os.path.getsize(out)/1e6:.1f} Mo · {len(meta)} chapitres")
 
 if __name__ == "__main__":
-    main()
+    eng = sys.argv[sys.argv.index("--engine") + 1] if "--engine" in sys.argv else "piper"
+    try:
+        main()
+        if eng == "gemini":
+            write_etat(os.path.basename(sys.argv[1])[:10], eng, True)
+    except Exception as e:
+        if eng == "gemini":
+            write_etat(os.path.basename(sys.argv[1])[:10], eng, False, {"exception": str(e)[:300]})
+        raise
