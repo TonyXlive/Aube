@@ -285,7 +285,8 @@ def main():
         import gemini_tts
         if gemini_tts.ETAT["erreurs"]:
             ed["podcast"]["tts_errors"] = gemini_tts.ETAT["erreurs"]
-    if old and old != ed["podcast"]["src"] and os.path.exists(old):
+    # supprime l'ancienne version seulement si elle est dans le même dossier de sortie
+    if old and old != ed["podcast"]["src"] and os.path.dirname(old) == os.path.dirname(ed["podcast"]["src"]) and os.path.exists(old):
         os.remove(old)
     json.dump(ed, open(a.edition, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"{out} · {t/60:.1f} min · {os.path.getsize(out)/1e6:.1f} Mo · {len(meta)} chapitres")
