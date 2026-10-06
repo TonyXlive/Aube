@@ -1,0 +1,22 @@
+{
+  "name": "Aube — brief du matin",
+  "short_name": "Aube",
+  "description": "Ton brief d'actualité du matin : monde, France, Lyon, tech, IA, bourse.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0c1b",
+  "theme_color": "#6a48f0",
+  "categories": ["news"],
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Alertes", "url": "./#alertes", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ]
+}
