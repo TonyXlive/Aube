@@ -1,5 +1,5 @@
 // Aube service worker — shell en cache, éditions en "réseau d'abord"
-const VERSION = 'aube-v1';
+const VERSION = 'aube-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/favicon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -143,7 +143,7 @@ main{padding:6px 16px 0;display:flex;flex-direction:column;gap:26px}
 /* sheet */
 .scrim{position:fixed;inset:0;background:rgba(10,8,22,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
 .scrim.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:480px;margin:0 auto;background:var(--surface);border-radius:26px 26px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-height:88vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:480px;margin:0 auto;background:var(--surface);border-radius:26px 26px 0 0;padding:10px 20px calc(22px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-height:82vh;overflow-y:auto;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
 .sheet.on{transform:none}
 .grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
 .sheet h2{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1.12;letter-spacing:-.025em;margin:10px 0 10px;text-wrap:balance}
@@ -161,6 +161,61 @@ main{padding:6px 16px 0;display:flex;flex-direction:column;gap:26px}
 .archive button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .toast{position:fixed;left:50%;bottom:104px;transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;transition:.25s;z-index:60;pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
+/* lu / non lu */
+.card.read h3{opacity:.55}.card.read p{opacity:.7}
+.readmark{display:none;font-size:11px;font-weight:700;color:var(--savoir);align-items:center;gap:3px}
+.card.read .readmark{display:inline-flex}
+/* hero extras */
+.herorow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;flex-wrap:wrap}
+.flashbtn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 16px 0 12px;border-radius:999px;background:#fff;color:#2a1660;font-weight:700;font-size:14px;box-shadow:0 6px 18px rgba(40,10,90,.25)}
+.flashbtn svg{width:16px;height:16px}
+.prog{flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:rgba(255,255,255,.85)}
+.prog .bar{height:5px;border-radius:3px;background:rgba(255,255,255,.25);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:#fff;border-radius:3px;transition:width .4s}
+.wx{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.14);border-radius:14px;padding:8px 12px;margin:0 0 12px;font-size:13px}
+.wx b{font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:-.02em}
+.wx .ico{font-size:24px;line-height:1}
+.wx .more{color:rgba(255,255,255,.85);font-size:12px;line-height:1.35;min-width:0}
+/* flash (stories) */
+.flash{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;color:#fff;background:#120d2a;padding:calc(12px + env(safe-area-inset-top,0px)) 18px calc(22px + env(safe-area-inset-bottom,0px));transition:background .35s;user-select:none;-webkit-user-select:none}
+.flash .bars{display:flex;gap:4px}
+.flash .bars span{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.28);overflow:hidden}
+.flash .bars span i{display:block;height:100%;width:0;background:#fff}
+.flash .bars span.done i{width:100%}
+.flash .fhead{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.8)}
+.flash .fclose{width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,.14);display:grid;place-items:center;color:#fff}
+.flash .fclose svg{width:18px;height:18px}
+.flash .fbody{flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;max-width:520px;width:100%;margin:0 auto}
+.flash .fcat{display:inline-flex;align-self:flex-start;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.18);font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.flash h2{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,8vw,40px);line-height:1.05;letter-spacing:-.03em;margin:0;text-wrap:balance}
+.flash p{font-size:17px;line-height:1.55;margin:0;color:rgba(255,255,255,.92)}
+.flash .fsrc{font-size:13px;color:rgba(255,255,255,.75)}
+.flash .fcta{display:flex;align-items:center;justify-content:center;gap:8px;height:50px;border-radius:15px;background:#fff;color:#1d1440;font-weight:700;text-decoration:none;max-width:520px;width:100%;margin:0 auto;position:relative;z-index:2}
+.flash .tapzone{position:absolute;top:90px;bottom:90px;width:38%;z-index:1}
+.flash .tapzone.l{left:0}.flash .tapzone.r{right:0;width:62%}
+.flash .fhint{text-align:center;font-size:11.5px;color:rgba(255,255,255,.6);margin-top:10px}
+/* réglages */
+.set h3{font-family:var(--f-display);font-size:16px;margin:18px 0 8px}
+.togs{display:flex;flex-wrap:wrap;gap:8px}
+.tog{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:999px;background:var(--surface-2);font-size:13px;font-weight:600;color:var(--ink-2)}
+.tog .dot{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.tog[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--surface-2);padding:4px;border-radius:13px}
+.seg button{height:38px;border-radius:10px;font-weight:600;font-size:13.5px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.cityrow{display:flex;gap:8px}
+.cityrow input{flex:1;min-width:0;height:44px;border-radius:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:0 12px;font:inherit}
+.cityrow button{height:44px;padding:0 16px;border-radius:13px;background:var(--accent);color:var(--accent-ink);font-weight:700}
+.sethint{font-size:12.5px;color:var(--ink-2);margin:6px 0 0}
+.icsbtn{margin-left:auto;font-weight:600;color:var(--accent);font-size:12.5px;display:inline-flex;align-items:center;gap:4px}
+.icsbtn svg{width:14px;height:14px}
+/* tirer pour actualiser */
+.ptr{position:fixed;left:50%;top:calc(8px + env(safe-area-inset-top,0px));z-index:25;width:38px;height:38px;margin-left:-19px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--accent);transform:translateY(-70px);transition:transform .2s}
+.ptr svg{width:18px;height:18px}
+.ptr.go svg{animation:spin .8s linear infinite}
+main{zoom:var(--z,1)}.sheet>*:not(.grab):not(.sclose){zoom:var(--z,1)}
+.sclose{position:sticky;top:0;float:right;margin:-4px -6px 0 0;width:34px;height:34px;border-radius:11px;background:var(--surface-2);display:grid;place-items:center;color:var(--ink-2);z-index:2}
+.sclose svg{width:16px;height:16px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -171,7 +226,7 @@ main{padding:6px 16px 0;display:flex;flex-direction:column;gap:26px}
   <header class="top">
     <div class="toprow">
       <div class="brand"><div class="sun"><i></i></div><div><b>Aube</b><small id="dateLabel">Ton brief du matin</small><div class="offline" id="offline" hidden>Hors connexion · édition en cache</div></div></div>
-      <div class="hbtns"><button class="iconbtn" id="installBtn" aria-label="Installer l'appli" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button><button class="iconbtn" id="refreshBtn" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></button><button class="iconbtn" id="themeBtn" aria-label="Changer de thème"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></div>
+      <div class="hbtns"><button class="iconbtn" id="installBtn" aria-label="Installer l'appli" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg></button><button class="iconbtn" id="refreshBtn" aria-label="Actualiser"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></button><button class="iconbtn" id="setBtn" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button><button class="iconbtn" id="themeBtn" aria-label="Changer de thème"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button></div>
     </div>
     <label class="search" for="q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" type="search" placeholder="Chercher une news, une source…" autocomplete="off"></label>
     <div class="chips" id="chips" role="toolbar" aria-label="Catégories"></div>
@@ -189,6 +244,8 @@ main{padding:6px 16px 0;display:flex;flex-direction:column;gap:26px}
 <div class="scrim" id="scrim"></div>
 <section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sTitle"></section>
 <div class="toast" id="toast"></div>
+<div class="flash" id="flash" hidden role="dialog" aria-label="Le Flash"></div>
+<div class="ptr" id="ptr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></svg></div>
 
 <script>
 const CATS=[
@@ -202,7 +259,9 @@ const CATS=[
  {id:"tech",label:"Tech",c:"#0ea5e9"},
  {id:"ia",label:"IA",c:"#8b5cf6"},
  {id:"nothing",label:"Nothing",c:"#a3a3a3"},
+ {id:"jeux",label:"Jeux vidéo",c:"#f97316"},
  {id:"rh",label:"RH & paie",c:"#d97706"},
+ {id:"sirh",label:"SIRH",c:"#0891b2"},
  {id:"sciences",label:"Sciences",c:"#14b8a6"},
  {id:"sport",label:"Sport",c:"#ef4444"},
  {id:"culture",label:"Culture",c:"#ec4899"}
@@ -212,9 +271,16 @@ const IMP={une:"Essentiel",important:"Important",savoir:"À savoir"};
 const S={editions:[],cur:null,cat:"all",view:"home",q:"",saved:{},loading:true,dbOk:true};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
-try{S.saved=JSON.parse(localStorage.getItem("aube_saved")||"{}")||{}}catch(e){S.saved={}}
+function ls(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+S.saved=ls("aube_saved",{})||{};S.read=ls("aube_read",{})||{};S.hidden=ls("aube_hidden",[])||[];
+S.zoom=ls("aube_zoom",1)||1;S.city=ls("aube_city",{name:"Lyon",lat:45.7578,lon:4.832})||{name:"Lyon",lat:45.7578,lon:4.832};
+document.documentElement.style.setProperty("--z",S.zoom);
+function vib(ms){try{navigator.vibrate&&navigator.vibrate(ms||8)}catch(e){}}
+function visCats(){return CATS.filter(c=>c.id==="all"||c.id==="une"||!S.hidden.includes(c.id))}
+function markRead(k){if(S.read[k])return;S.read[k]=Date.now();const ks=Object.keys(S.read);if(ks.length>1500){ks.sort((a,b)=>S.read[a]-S.read[b]).slice(0,500).forEach(x=>delete S.read[x])}lsSet("aube_read",S.read)}
 try{const t=localStorage.getItem("aube_theme");if(t)document.documentElement.dataset.theme=t}catch(e){}
-function persist(){try{localStorage.setItem("aube_saved",JSON.stringify(S.saved))}catch(e){}}
+function persist(){lsSet("aube_saved",S.saved)}
 
 function todayISO(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function daysUntil(iso){const [y,m,d]=iso.split("-").map(Number);const t=new Date();const a=Date.UTC(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((Date.UTC(y,m-1,d)-a)/864e5)}
@@ -223,21 +289,24 @@ function initials(s){s=String(s||"?").replace(/^(Le|La|Les|L')\s*/i,"");return s
 function host(u){try{return new URL(u).hostname.replace(/^www\./,"")}catch(e){return ""}}
 function greet(){const h=new Date().getHours();return h<5?"Bonne nuit":h<12?"Bonjour":h<18?"Bon après-midi":"Bonsoir"}
 
-function articles(){const e=S.cur;return e&&Array.isArray(e.articles)?e.articles:[]}
+function allArticles(){const e=S.cur;return e&&Array.isArray(e.articles)?e.articles:[]}
+function articles(){return allArticles().filter(a=>a.cat==="une"||!S.hidden.includes(a.cat))}
+function readMins(l){const w=l.reduce((n,a)=>n+((a.title||"")+" "+(a.summary||"")).split(/\s+/).length,0);return Math.max(1,Math.round(w/200))}
 function visibleAlerts(){const e=S.cur;if(!e||!Array.isArray(e.alerts))return[];return e.alerts.map(a=>({...a,_d:daysUntil(a.date)})).filter(a=>a._d>=0).sort((a,b)=>a._d-b._d)}
 
 function bmIcon(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>'}
 function card(a,big){const c=CAT[a.cat]||CAT.all;const k=keyOf(a);const sv=!!S.saved[k];
- return `<article><div class="card${big?" big":""}" role="button" tabindex="0" data-open="${esc(k)}">
+ const rd=!!S.read[k];
+ return `<article><div class="card${big?" big":""}${rd?" read":""}" role="button" tabindex="0" data-open="${esc(k)}">
   <div class="row"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${esc(a.importance)}">${esc(IMP[a.importance]||"")}</span></div>
   <h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p>
-  <div class="foot"><span class="src">${esc(initials(a.source))}</span><span>${esc(a.source)}</span>${a.reliability?`<span>· ${esc(a.reliability)}</span>`:""}
+  <div class="foot"><span class="src">${esc(initials(a.source))}</span><span>${esc(a.source)}</span>${a.reliability?`<span>· ${esc(a.reliability)}</span>`:""}<span class="readmark">✓ Lu</span>
   <button class="bm" data-save="${esc(k)}" aria-pressed="${sv}" aria-label="${sv?"Retirer des favoris":"Ajouter aux favoris"}">${bmIcon()}</button></div>
  </div></article>`}
 function keyOf(a){return (S.cur?S.cur.date:"")+"|"+(a.id||a.title)}
 
 function renderChips(){const arts=articles();const counts={};arts.forEach(a=>counts[a.cat]=(counts[a.cat]||0)+1);
- $("#chips").innerHTML=CATS.filter(c=>c.id==="all"||counts[c.id]).map(c=>`<button class="chip" data-cat="${c.id}" aria-pressed="${S.cat===c.id}" style="--c:${c.c}">${c.id!=="all"?'<span class="dot"></span>':""}${esc(c.label)}<span class="n">${c.id==="all"?arts.length:counts[c.id]}</span></button>`).join("")}
+ $("#chips").innerHTML=visCats().filter(c=>c.id==="all"||counts[c.id]).map(c=>`<button class="chip" data-cat="${c.id}" aria-pressed="${S.cat===c.id}" style="--c:${c.c}">${c.id!=="all"?'<span class="dot"></span>':""}${esc(c.label)}<span class="n">${c.id==="all"?arts.length:counts[c.id]}</span></button>`).join("")}
 
 function cdCard(a){const d=a._d;const cls=d===0?"today":d<=7?"soon":"";const c=CAT[a.cat]||CAT.all;
  const big=d===0?"Auj.":d===1?"Demain":`J-${d}`;
@@ -250,13 +319,16 @@ function renderHome(){const e=S.cur;const arts=articles();let h="";
  if(S.cat==="all"){
   h+=`<section class="hero"><div class="eyebrow">${esc(greet())} · ${esc(fmtDate(e.date))}</div>
    <h1>${esc(e.headline||"L'essentiel du jour")}</h1><p class="sub">${esc(e.tagline||"Le monde en 30 secondes")}</p>
-   <ol class="thirty">${(e.thirty||[]).map((t,i)=>`<li><b>0${i+1}</b><span>${esc(t)}</span></li>`).join("")}</ol>
-   <div class="meta">Édition générée ${e.generatedAt?esc(new Date(e.generatedAt).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})):""} · ${arts.length} news</div></section>`;
+   ${wxHTML()}
+   <div class="herorow" style="margin:0 0 14px"><button class="flashbtn" id="flashBtn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Le Flash · ${flashList().length} news</button>
+   <div class="prog"><span>${nRead(arts)}/${arts.length} lues · ≈ ${readMins(arts)} min de lecture</span><div class="bar"><i style="width:${arts.length?Math.round(nRead(arts)/arts.length*100):0}%"></i></div></div>
+   <ol class="thirty">${(e.thirty||[]).map((t,i)=>`<li><b>0${i+1}</b><span>${esc(t)}</span></li>`).join("")}</ol></div>
+   <div class="meta">Édition générée ${e.generatedAt?esc(new Date(e.generatedAt).toLocaleString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})):""}</div></section>`;
   const al=visibleAlerts();
   if(al.length)h+=`<section><div class="sec-h"><h2>Compte à rebours</h2><span>${al.length} échéances</span></div><div class="cd">${al.slice(0,12).map(cdCard).join("")}</div></section>`;
   const une=arts.filter(a=>a.cat==="une");
   if(une.length)h+=`<section><div class="sec-h"><h2>À la une</h2><span>${une.length} sujets</span></div><div class="list">${une.map(a=>card(a,true)).join("")}</div></section>`;
-  CATS.filter(c=>!["all","une"].includes(c.id)).forEach(c=>{const l=arts.filter(a=>a.cat===c.id);if(!l.length)return;
+  visCats().filter(c=>!["all","une"].includes(c.id)).forEach(c=>{const l=arts.filter(a=>a.cat===c.id);if(!l.length)return;
    h+=`<section><div class="sec-h"><h2>${esc(c.label)}</h2><button class="eyebrow" data-cat="${c.id}">Tout voir</button></div>${c.id==="bourse"?'<div class="disclaim">Infos de marché, pas un conseil en investissement.</div>':""}<div class="list">${l.slice(0,3).map(a=>card(a)).join("")}</div></section>`});
   if(e.notes&&e.notes.length)h+=`<section><div class="sec-h"><h2>À propos de cette édition</h2></div><div class="list">${e.notes.map(n=>`<div class="note">${esc(n)}</div>`).join("")}</div></section>`;
  }else{const c=CAT[S.cat];const l=arts.filter(a=>a.cat===S.cat);
@@ -265,7 +337,7 @@ function renderHome(){const e=S.cur;const arts=articles();let h="";
 
 function renderAlerts(){const al=visibleAlerts();
  return `<section><div class="sec-h"><h2>Toutes les échéances</h2><span>${al.length}</span></div><div class="list">${al.map(a=>{const c=CAT[a.cat]||CAT.all;const d=a._d;
-  return `<div class="card"><div class="row"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${d===0?"une":d<=7?"important":"savoir"}" style="font-family:var(--f-mono)">${d===0?"Aujourd'hui":d===1?"Demain":"J-"+d}</span></div><h3>${esc(a.title)}</h3><p style="-webkit-line-clamp:4">${esc(a.detail||"")}</p><div class="foot"><span>${esc(fmtDate(a.date))}</span>${a.url?`<a href="${esc(a.url)}" target="_blank" rel="noopener" style="margin-left:auto;font-weight:600;color:var(--accent)">${esc(a.source||host(a.url))} ↗</a>`:a.source?`<span style="margin-left:auto">${esc(a.source)}</span>`:""}</div></div>`}).join("")||'<div class="note">Aucune échéance à venir dans cette édition.</div>'}</div></section>`}
+  return `<div class="card"><div class="row"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${d===0?"une":d<=7?"important":"savoir"}" style="font-family:var(--f-mono)">${d===0?"Aujourd'hui":d===1?"Demain":"J-"+d}</span></div><h3>${esc(a.title)}</h3><p style="-webkit-line-clamp:4">${esc(a.detail||"")}</p><div class="foot"><span>${esc(fmtDate(a.date))}</span>${a.url?`<a href="${esc(a.url)}" target="_blank" rel="noopener" style="font-weight:600;color:var(--accent)">${esc(a.source||host(a.url))} ↗</a>`:""}<button class="icsbtn" data-ics="${esc(a.title)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></svg>Agenda</button></div></div>`}).join("")||'<div class="note">Aucune échéance à venir dans cette édition.</div>'}</div></section>`}
 
 function renderSaved(){const items=Object.values(S.saved).sort((a,b)=>(b._at||0)-(a._at||0));
  if(!items.length)return `<div class="empty"><div class="sun" style="margin:0 auto"><i></i></div><h3>Pas encore de favoris</h3><p>Touche le marque-page d'une news pour la garder ici, même après l'édition suivante.</p></div>`;
@@ -286,8 +358,8 @@ function render(){
  m.innerHTML=S.view==="home"?renderHome():S.view==="alerts"?renderAlerts():S.view==="saved"?renderSaved():renderArchive();
 }
 
-function openSheet(k){const a=articles().find(x=>keyOf(x)===k);if(!a)return;const c=CAT[a.cat]||CAT.all;const sv=!!S.saved[k];
- $("#sheet").innerHTML=`<div class="grab"></div><div class="kv"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${esc(a.importance)}">${esc(IMP[a.importance]||"")}</span>${a.reliability?`<span class="pill savoir">Fiabilité : ${esc(a.reliability)}</span>`:""}</div>
+function openSheet(k){const a=allArticles().find(x=>keyOf(x)===k);if(!a)return;markRead(k);document.querySelectorAll(`[data-open="${CSS.escape(k)}"]`).forEach(n=>n.classList.add("read"));const c=CAT[a.cat]||CAT.all;const sv=!!S.saved[k];
+ $("#sheet").innerHTML=`<div class="grab"></div><button class="sclose" data-close="1" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="kv"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${esc(a.importance)}">${esc(IMP[a.importance]||"")}</span>${a.reliability?`<span class="pill savoir">Fiabilité : ${esc(a.reliability)}</span>`:""}</div>
  <h2 id="sTitle">${esc(a.title)}</h2><p class="body">${esc(a.summary)}</p>
  <div class="kv"><span class="src">${esc(initials(a.source))}</span><b style="color:var(--ink)">${esc(a.source)}</b><span>· ${esc(host(a.url))}</span></div>
  ${a.url?`<a class="cta" href="${esc(a.url)}" target="_blank" rel="noopener">Lire l'article complet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M8 7h9v9"/></svg></a>`:""}
@@ -297,12 +369,17 @@ function openSheet(k){const a=articles().find(x=>keyOf(x)===k);if(!a)return;cons
  const cb=$("#copyBtn");cb.onclick=()=>{if(navigator.share){navigator.share({title:a.title,text:a.summary,url:a.url}).catch(()=>{});return}const done=()=>toast("Lien copié");if(navigator.clipboard)navigator.clipboard.writeText(a.url).then(done,()=>{selectUrl();toast("Lien sélectionné")});else{selectUrl();toast("Lien sélectionné")}};
 }
 function selectUrl(){const n=$("#urlTxt");if(!n)return;const r=document.createRange();r.selectNodeContents(n);const s=getSelection();s.removeAllRanges();s.addRange(r)}
-function closeSheet(){$("#scrim").classList.remove("on");$("#sheet").classList.remove("on")}
+function closeSheet(){$("#scrim").classList.remove("on");$("#sheet").classList.remove("on");if(S.view==="home"&&S.cat==="all"){const p=$(".prog");if(p){const arts=articles();p.querySelector("span").textContent=`${nRead(arts)}/${arts.length} lues · ≈ ${readMins(arts)} min de lecture`;p.querySelector("i").style.width=(arts.length?Math.round(nRead(arts)/arts.length*100):0)+"%"}}}
 let tt;function toast(t){const n=$("#toast");n.textContent=t;n.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>n.classList.remove("on"),1600)}
-function toggleSave(k){if(S.saved[k]){delete S.saved[k];toast("Retiré des favoris")}else{const a=articles().find(x=>keyOf(x)===k);if(!a)return;S.saved[k]={...a,_date:S.cur.date,_at:Date.now()};toast("Ajouté aux favoris")}persist();
+function toggleSave(k){if(S.saved[k]){delete S.saved[k];toast("Retiré des favoris")}else{const a=allArticles().find(x=>keyOf(x)===k);if(!a)return;vib(12);S.saved[k]={...a,_date:S.cur.date,_at:Date.now()};toast("Ajouté aux favoris")}persist();
  document.querySelectorAll(`[data-save="${CSS.escape(k)}"]`).forEach(b=>{const on=!!S.saved[k];b.setAttribute("aria-pressed",on);if(b.classList.contains("ghost"))b.innerHTML=bmIcon()+(on?"Enregistré":"Enregistrer")});if(S.view==="saved")render()}
 
-document.addEventListener("click",ev=>{const t=ev.target.closest("[data-save],[data-open],[data-cat],[data-view],[data-ed],[data-alert]");if(!t)return;
+document.addEventListener("click",ev=>{if(ev.target.closest("#flashBtn")){openFlash();return}
+ if(ev.target.closest("[data-close]")){closeSheet();return}
+ const t=ev.target.closest("[data-save],[data-open],[data-cat],[data-view],[data-ed],[data-alert],[data-ics],[data-tog],[data-zoom]");if(!t)return;
+ if(t.dataset.ics){const a=visibleAlerts().find(x=>x.title===t.dataset.ics);if(a)addToCal(a);return}
+ if(t.dataset.tog){const id=t.dataset.tog;S.hidden=S.hidden.includes(id)?S.hidden.filter(x=>x!==id):[...S.hidden,id];lsSet("aube_hidden",S.hidden);t.setAttribute("aria-pressed",!S.hidden.includes(id));if(S.hidden.includes(S.cat))S.cat="all";render();return}
+ if(t.dataset.zoom){S.zoom=+t.dataset.zoom;lsSet("aube_zoom",S.zoom);document.documentElement.style.setProperty("--z",S.zoom);document.querySelectorAll("[data-zoom]").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.zoom===S.zoom));return}
  if(t.dataset.save){ev.stopPropagation();toggleSave(t.dataset.save);return}
  if(t.dataset.open){openSheet(t.dataset.open);return}
  if(t.dataset.cat){S.cat=t.dataset.cat;S.view="home";render();window.scrollTo({top:0,behavior:"smooth"});const ch=document.querySelector(`.chip[data-cat="${t.dataset.cat}"]`);ch&&ch.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"});return}
@@ -315,6 +392,72 @@ $("#scrim").onclick=closeSheet;
 $("#q").addEventListener("input",e=>{S.q=e.target.value;render()});
 $("#themeBtn").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=n;try{localStorage.setItem("aube_theme",n)}catch(e){}};
 let sy=null;$("#sheet").addEventListener("touchstart",e=>{sy=e.touches[0].clientY},{passive:true});$("#sheet").addEventListener("touchend",e=>{if(sy!==null&&e.changedTouches[0].clientY-sy>90&&$("#sheet").scrollTop<=0)closeSheet();sy=null});
+
+
+function nRead(l){return l.filter(a=>S.read[keyOf(a)]).length}
+function flashList(){const l=articles();const une=l.filter(a=>a.cat==="une");const imp=l.filter(a=>a.cat!=="une"&&a.importance!=="savoir");const seen=new Set();const out=[];
+ [...une,...imp].forEach(a=>{if(out.length>=12)return;const c=a.cat;if(c!=="une"&&out.filter(x=>x.cat===c).length>=1)return;if(seen.has(a.title))return;seen.add(a.title);out.push(a)});return out}
+
+/* ---------- météo (Open-Meteo, sans clé) ---------- */
+const WMO={0:["☀️","Grand soleil"],1:["🌤️","Plutôt ensoleillé"],2:["⛅","Éclaircies"],3:["☁️","Couvert"],45:["🌫️","Brouillard"],48:["🌫️","Brouillard givrant"],51:["🌦️","Bruine légère"],53:["🌦️","Bruine"],55:["🌧️","Bruine forte"],61:["🌧️","Pluie faible"],63:["🌧️","Pluie"],65:["🌧️","Forte pluie"],66:["🌧️","Pluie verglaçante"],67:["🌧️","Pluie verglaçante"],71:["🌨️","Neige faible"],73:["🌨️","Neige"],75:["❄️","Forte neige"],77:["🌨️","Grésil"],80:["🌦️","Averses"],81:["🌧️","Averses"],82:["⛈️","Fortes averses"],85:["🌨️","Averses de neige"],86:["🌨️","Averses de neige"],95:["⛈️","Orages"],96:["⛈️","Orages et grêle"],99:["⛈️","Orages et grêle"]};
+S.wx=ls("aube_wx",null);
+function wxHTML(){const w=S.wx;if(!w||w.city!==S.city.name)return"";const m=WMO[w.code]||["🌡️",""];
+ return `<div class="wx"><span class="ico">${m[0]}</span><b>${Math.round(w.t)}°</b><span class="more">${esc(w.city)} · ${esc(m[1])}<br>${Math.round(w.min)}° / ${Math.round(w.max)}° · pluie ${w.rain}%</span></div>`}
+async function loadWx(){if(S.wx&&S.wx.city===S.city.name&&Date.now()-S.wx.at<30*60e3)return;
+ try{const u=`https://api.open-meteo.com/v1/forecast?latitude=${S.city.lat}&longitude=${S.city.lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Europe%2FParis&forecast_days=1`;
+  const r=await fetch(u);if(!r.ok)return;const j=await r.json();
+  S.wx={city:S.city.name,t:j.current.temperature_2m,code:j.current.weather_code,max:j.daily.temperature_2m_max[0],min:j.daily.temperature_2m_min[0],rain:j.daily.precipitation_probability_max[0]??0,at:Date.now()};
+  lsSet("aube_wx",S.wx);if(S.view==="home"&&S.cat==="all"&&!S.q){const h=$(".hero .wx");const html=wxHTML();if(h)h.outerHTML=html;else{const sub=$(".hero .sub");sub&&sub.insertAdjacentHTML("afterend",html)}}
+ }catch(e){}}
+
+/* ---------- Le Flash (mode stories) ---------- */
+const FL={i:0,list:[],timer:null,start:0,dur:9000,paused:false,left:0};
+function openFlash(){FL.list=flashList();if(!FL.list.length)return;FL.i=0;const f=$("#flash");f.hidden=false;document.body.style.overflow="hidden";vib(10);showFlash()}
+function closeFlash(){clearTimeout(FL.timer);cancelAnimationFrame(FL.raf);$("#flash").hidden=true;document.body.style.overflow="";if(S.view==="home")render()}
+function hexA(c,a){if(!c.startsWith("#"))return`rgba(106,72,240,${a})`;const n=parseInt(c.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+function showFlash(){const a=FL.list[FL.i];const c=CAT[a.cat]||CAT.all;const k=keyOf(a);markRead(k);const f=$("#flash");
+ f.style.background=`radial-gradient(120% 70% at 100% 0%,${hexA(c.c,.85)},transparent 60%),radial-gradient(100% 60% at 0% 100%,rgba(124,92,255,.75),transparent 65%),#120d2a`;
+ f.innerHTML=`<div class="bars">${FL.list.map((_,i)=>`<span class="${i<FL.i?"done":""}"><i ${i===FL.i?'id="flbar"':""}></i></span>`).join("")}</div>
+ <div class="fhead"><span>Le Flash · ${FL.i+1}/${FL.list.length}</span><button class="fclose" id="flClose" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+ <div class="tapzone l" id="flPrev"></div><div class="tapzone r" id="flNext"></div>
+ <div class="fbody"><span class="fcat">${esc(c.label)}</span><h2>${esc(a.title)}</h2><p>${esc(a.summary)}</p><span class="fsrc">${esc(a.source)}${a.reliability?" · fiabilité : "+esc(a.reliability):""}</span></div>
+ ${a.url?`<a class="fcta" href="${esc(a.url)}" target="_blank" rel="noopener">Lire l'article complet ↗</a>`:""}<div class="fhint">Touche à droite pour avancer, à gauche pour revenir · maintiens pour mettre en pause</div>`;
+ $("#flClose").onclick=closeFlash;$("#flPrev").onclick=()=>stepFlash(-1);$("#flNext").onclick=()=>stepFlash(1);
+ const hold=on=>{FL.paused=on};["#flPrev","#flNext"].forEach(sel=>{const z=$(sel);z.addEventListener("pointerdown",()=>{FL.downAt=Date.now();hold(true)});z.addEventListener("pointerup",()=>hold(false));z.addEventListener("pointerleave",()=>hold(false))});
+ FL.elapsed=0;FL.last=performance.now();cancelAnimationFrame(FL.raf);
+ const tick=t=>{if(!FL.paused)FL.elapsed+=t-FL.last;FL.last=t;const p=Math.min(1,FL.elapsed/FL.dur);const b=$("#flbar");if(b)b.style.width=(p*100)+"%";if(p>=1){stepFlash(1);return}FL.raf=requestAnimationFrame(tick)};
+ if(!matchMedia("(prefers-reduced-motion: reduce)").matches)FL.raf=requestAnimationFrame(tick)}
+function stepFlash(d){if(FL.downAt&&Date.now()-FL.downAt>450){FL.downAt=0;return}FL.downAt=0;const n=FL.i+d;if(n<0)return;if(n>=FL.list.length){closeFlash();toast("Tu es à jour ✨");return}FL.i=n;vib(6);showFlash()}
+document.addEventListener("keydown",e=>{if($("#flash").hidden)return;if(e.key==="ArrowRight")stepFlash(1);if(e.key==="ArrowLeft")stepFlash(-1);if(e.key==="Escape")closeFlash()});
+
+/* ---------- agenda (.ics) ---------- */
+function addToCal(a){const d=a.date.replace(/-/g,"");const [y,m,dd]=a.date.split("-").map(Number);const n=new Date(Date.UTC(y,m-1,dd+1));const d2=n.getUTCFullYear()+String(n.getUTCMonth()+1).padStart(2,"0")+String(n.getUTCDate()).padStart(2,"0");
+ const clean=t=>String(t||"").replace(/[\;,]/g,m=>"\\"+m).replace(/\n/g,"\\n");
+ const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Aube//FR","BEGIN:VEVENT","UID:"+d+"-"+Math.random().toString(36).slice(2)+"@aube","DTSTAMP:"+new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z","DTSTART;VALUE=DATE:"+d,"DTEND;VALUE=DATE:"+d2,"SUMMARY:"+clean(a.title),"DESCRIPTION:"+clean((a.detail||"")+(a.url?" "+a.url:"")),"BEGIN:VALARM","TRIGGER:-PT15H","ACTION:DISPLAY","DESCRIPTION:"+clean(a.title),"END:VALARM","END:VEVENT","END:VCALENDAR"].join("\r\n");
+ const url=URL.createObjectURL(new Blob([ics],{type:"text/calendar"}));const l=document.createElement("a");l.href=url;l.download=(a.title.slice(0,40).replace(/[^\w\- ]+/g,"").trim()||"alerte")+".ics";document.body.appendChild(l);l.click();setTimeout(()=>{URL.revokeObjectURL(url);l.remove()},1500);toast("Ouvre le fichier pour l'ajouter à ton agenda")}
+
+/* ---------- réglages ---------- */
+function openSettings(){$("#sheet").innerHTML=`<div class="grab"></div><button class="sclose" data-close="1" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="set"><h2 id="sTitle" style="margin-top:4px">Réglages</h2>
+ <h3>Mes catégories</h3><div class="togs">${CATS.filter(c=>!["all","une"].includes(c.id)).map(c=>`<button class="tog" data-tog="${c.id}" aria-pressed="${!S.hidden.includes(c.id)}" style="--c:${c.c}"><span class="dot"></span>${esc(c.label)}</button>`).join("")}</div>
+ <p class="sethint">Touche une catégorie pour la masquer ou l'afficher. « À la une » reste toujours visible.</p>
+ <h3>Taille du texte</h3><div class="seg">${[[1,"Normal"],[1.1,"Grand"],[1.2,"Très grand"]].map(([z,l])=>`<button data-zoom="${z}" aria-pressed="${S.zoom===z}">${l}</button>`).join("")}</div>
+ <h3>Ville pour la météo</h3><form class="cityrow" id="cityForm"><input id="cityIn" value="${esc(S.city.name)}" placeholder="Ex. Lyon" autocomplete="off"><button type="submit">OK</button></form><p class="sethint" id="cityMsg">Météo du jour affichée en haut du brief.</p>
+ <h3>Lecture</h3><button class="ghost" id="resetRead" style="width:100%">Marquer tout comme non lu</button>
+ <p class="sethint" style="margin-top:16px">Aube · nouvelle édition chaque nuit vers 2h. Tes favoris, réglages et news lues restent sur ce téléphone.</p></div>`;
+ $("#scrim").classList.add("on");$("#sheet").classList.add("on");
+ $("#resetRead").onclick=()=>{S.read={};lsSet("aube_read",S.read);toast("Toutes les news sont non lues");render()};
+ $("#cityForm").onsubmit=async e=>{e.preventDefault();const q=$("#cityIn").value.trim();if(!q)return;$("#cityMsg").textContent="Recherche…";
+  try{const r=await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&country=FR&name="+encodeURIComponent(q));const j=await r.json();const g=j.results&&j.results[0];
+   if(!g){$("#cityMsg").textContent="Ville introuvable. Vérifie l'orthographe.";return}
+   S.city={name:g.name,lat:g.latitude,lon:g.longitude};lsSet("aube_city",S.city);S.wx=null;$("#cityMsg").textContent="Météo réglée sur "+g.name+(g.admin2?" ("+g.admin2+")":"")+".";await loadWx();render()}
+  catch(x){$("#cityMsg").textContent="Pas de connexion. Réessaie plus tard."}}}
+$("#setBtn").onclick=openSettings;
+
+/* ---------- tirer pour actualiser ---------- */
+(()=>{let y0=null,dy=0;const P=$("#ptr");
+ addEventListener("touchstart",e=>{if(scrollY<=0&&$("#flash").hidden&&!$("#sheet").classList.contains("on"))y0=e.touches[0].clientY;else y0=null},{passive:true});
+ addEventListener("touchmove",e=>{if(y0===null)return;dy=Math.max(0,e.touches[0].clientY-y0);P.style.transform=`translateY(${Math.min(dy*.5,70)-70}px) rotate(${dy*2}deg)`},{passive:true});
+ addEventListener("touchend",async()=>{if(y0===null)return;y0=null;if(dy>120){P.classList.add("go");P.style.transform="translateY(0)";vib(10);await boot(true);loadWx()}P.classList.remove("go");P.style.transform="";dy=0});})();
 
 render();
 const CACHE_ED={};
@@ -331,7 +474,7 @@ async function boot(fresh,silent){
  }catch(x){S.dbOk=!!S.cur;$("#offline").hidden=false}
  S.loading=false;rb.classList.remove("spin");render();
 }
-$("#refreshBtn").onclick=()=>boot(true);
+$("#refreshBtn").onclick=()=>{boot(true);loadWx()};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&(!S.cur||S.cur.date===S.editions[0]))boot(true,true)});
 addEventListener("online",()=>{$("#offline").hidden=true;boot(true,true)});addEventListener("offline",()=>{$("#offline").hidden=false});
 let deferred=null;addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;$("#installBtn").hidden=false});
@@ -339,7 +482,7 @@ $("#installBtn").onclick=async()=>{if(!deferred)return;deferred.prompt();await d
 addEventListener("appinstalled",()=>{$("#installBtn").hidden=true;toast("Aube est installée")});
 if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 if(location.hash==="#alertes")S.view="alerts";
-boot(false);
+boot(false);loadWx();
 </script>
 
 </body>
