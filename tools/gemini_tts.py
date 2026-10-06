@@ -55,11 +55,13 @@ def _to_wav(blobs, path):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate); w.writeframes(frames)
 
 def _interactions(model, turns, key):
+    # chaque morceau de texte doit porter son locuteur : la consigne générale va dans le style
     content = [{"type": "text", "text": t,
-                "annotations": [{"type": "speech_metadata", "speaker": who, "style": style or STYLE[who]}]}
+                "annotations": [{"type": "speech_metadata", "speaker": who,
+                                 "style": (style + ", " if style else "") + STYLE[who] + ". " + CONSIGNE}]}
                for who, t, style in turns]
     body = {"model": model,
-            "input": [{"type": "user_input", "content": [{"type": "text", "text": CONSIGNE}] + content}],
+            "input": [{"type": "user_input", "content": content}],
             "response_format": {"type": "audio"},
             "generation_config": {"speech_config": {"mode": "conversational",
                                                     "speakers": [{"speaker": s, "voice": v} for s, v in VOIX.items()]}}}
@@ -80,7 +82,7 @@ def dialogue(turns, path):
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY absente")
-    essais = [ETAT["ok"]] if ETAT["ok"] else [(m, f) for m in MODELES for f in ("interactions", "generate")]
+    essais = [ETAT["ok"]] if ETAT["ok"] else [(m, "generate" if "2.5" in m else "interactions") for m in MODELES]
     derniere = None
     for model, fmt in essais:
         for tentative in range(4):
