@@ -1,0 +1,14 @@
+{
+ "date": "2026-10-06",
+ "engine": "gemini",
+ "ok": false,
+ "errors": [
+  "gemini-3.8-flash-tts/interactions HTTP 400 {\"error\":{\"message\":\"Multi-speaker interactions must specify a speaker for each text turn.\",\"code\":\"invalid_request\"}}",
+  "gemini-3.8-flash-tts/generate HTTP 400 {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Multi-speaker generation requests must specify speech_metadata.speaker for each text part in the contents.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n",
+  "gemini-3.8-flash-lite-tts/interactions HTTP 400 {\"error\":{\"message\":\"Multi-speaker interactions must specify a speaker for each text turn.\",\"code\":\"invalid_request\"}}",
+  "gemini-3.8-flash-lite-tts/generate HTTP 400 {\n  \"error\": {\n    \"code\": 400,\n    \"message\": \"Multi-speaker generation requests must specify speech_metadata.speaker for each text part in the contents.\",\n    \"status\": \"INVALID_ARGUMENT\"\n  }\n}\n",
+  "gemini-2.5-flash-preview-tts/interactions HTTP 400 {\"error\":{\"message\":\"Speech annotations are not supported for model 'gemini-2.5-flash-preview-tts'.\",\"code\":\"invalid_request\"}}",
+  "gemini-2.5-flash-preview-tts/generate HTTP 429 {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/g"
+ ],
+ "exception": "Gemini TTS indisponible : gemini-2.5-flash-preview-tts/generate HTTP 429 {\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To mon"
+}
