@@ -14,3 +14,9 @@ curl -L -o voix.tar.gz https://github.com/rhasspy/piper/releases/download/v0.0.2
 python3 tools/podcast.py editions/AAAA-MM-JJ.json --voice fr-siwis-medium.onnx
 ```
 Seuls les 7 derniers fichiers audio sont gardés dans `podcast/`.
+
+### Voix de l'émission (par ordre de préférence, automatique)
+1. **Gemini TTS** (dialogue natif à deux voix) — nécessite le secret GitHub `GEMINI_API_KEY` (clé gratuite sur aistudio.google.com).
+2. **Voix Microsoft** via edge-tts (gratuit, sans clé).
+3. **Piper** (version de secours générée la nuit).
+Réglages facultatifs (variables d'environnement) : `GEMINI_VOICE_A` (Léa, défaut Aoede), `GEMINI_VOICE_B` (Hugo, défaut Puck), `GEMINI_TTS_MODELS`.

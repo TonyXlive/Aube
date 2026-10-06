@@ -260,6 +260,23 @@ main{zoom:var(--z,1)}.sheet>*:not(.grab):not(.sclose){zoom:var(--z,1)}
 .offl{font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .offl .ok{color:var(--savoir);font-weight:700}
 .tabs nav{grid-template-columns:repeat(5,1fr)}
+.tr{display:flex;flex-direction:column;gap:14px}
+.trc{background:var(--surface);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow);opacity:.62;transition:opacity .3s}
+.trc.on{opacity:1;outline:2px solid var(--accent)}
+.trc h4{margin:0 0 8px;font-family:var(--f-display);font-size:15.5px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.trc h4 span{font-family:var(--f-mono);font-size:11.5px;color:var(--ink-2);font-weight:500}
+.trc p{margin:0 0 7px;font-size:14.5px;line-height:1.55}
+.trc p b{color:var(--accent);font-weight:700;margin-right:4px}
+.trc p b.h2{color:var(--important)}
+.ltabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--surface-2);padding:4px;border-radius:13px}
+.ltabs button{height:36px;border-radius:10px;font-weight:600;font-size:13.5px;color:var(--ink-2)}
+.ltabs button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.eps{display:flex;flex-direction:column;gap:8px}
+.ep{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow)}
+.ep .ico{width:38px;height:38px;border-radius:12px;background:conic-gradient(from 200deg,var(--dawn-c),var(--dawn-a),var(--dawn-b),var(--dawn-c));display:grid;place-items:center;color:#fff;flex:none}
+.ep .ico svg{width:16px;height:16px}
+.ep b{display:block;font-size:14.5px}.ep span{font-size:12.5px;color:var(--ink-2)}
+.ep.on{outline:2px solid var(--accent)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -507,7 +524,7 @@ if("mediaSession" in navigator){const ms=navigator.mediaSession;const h=(a,f)=>{
  h("play",()=>playPause());h("pause",()=>AU.pause());h("seekbackward",d=>seekTo(AU.currentTime-((d&&d.seekOffset)||15)));h("seekforward",d=>seekTo(AU.currentTime+((d&&d.seekOffset)||30)));
  h("previoustrack",()=>jumpChap(-1));h("nexttrack",()=>jumpChap(1));h("seekto",d=>seekTo(d.seekTime))}
 let lastChap=-1,lastSave=0;
-AU.addEventListener("timeupdate",()=>{const t=AU.currentTime;const i=curChap(t);if(i!==lastChap){lastChap=i;setMeta();document.querySelectorAll(".chap").forEach((n,j)=>n.classList.toggle("on",j===i));const nw=$("#pNow");if(nw)nw.textContent=chapters()[i]?chapters()[i].title:""}
+AU.addEventListener("timeupdate",()=>{const t=AU.currentTime;const i=curChap(t);if(i!==lastChap){lastChap=i;setMeta();document.querySelectorAll(".chap").forEach((n,j)=>n.classList.toggle("on",j===i));document.querySelectorAll(".trc").forEach((n,j)=>{n.classList.toggle("on",j===i);if(j===i&&!AU.paused&&P.tab==="tr")n.scrollIntoView({block:"center",behavior:"smooth"})});const nw=$("#pNow");if(nw)nw.textContent=chapters()[i]?chapters()[i].title:""}
  const sc=$("#pScrub");if(sc&&!sc.dragging){sc.max=dur();sc.value=t}const tt=$("#pT");if(tt)tt.textContent=fmtT(t);const tr=$("#pR");if(tr)tr.textContent="-"+fmtT(dur()-t);
  const mb=$("#miniBar");if(mb)mb.style.width=(dur()?t/dur()*100:0)+"%";const mc=$("#miniChap");if(mc&&chapters()[i])mc.textContent=chapters()[i].title;
  if(Date.now()-lastSave>4000){lastSave=Date.now();const pos=ls("aube_pos",{});pos[P.src]=t;const ks=Object.keys(pos);if(ks.length>10)delete pos[ks[0]];lsSet("aube_pos",pos);try{navigator.mediaSession.setPositionState({duration:dur(),position:Math.min(t,dur()),playbackRate:AU.playbackRate})}catch(e){}}});
@@ -529,15 +546,25 @@ function renderListen(){const e=S.cur;
   <div class="prow"><button class="pchip" id="pRate">Vitesse ×${String(P.rate).replace(".",",")}</button><button class="pchip" id="pSleep">${P.sleepAt?"Arrêt dans "+Math.max(1,Math.round((P.sleepAt-Date.now())/60000))+" min":"Minuteur"}</button><span class="pchip">${Math.round(d/60)} min · ${c.length} chapitres</span></div>
  </section>
  <div class="offl" id="offl">Vérification du téléchargement…</div>
- <section><div class="sec-h"><h2>Chapitres</h2><span>touche pour y aller</span></div><div class="chaps">${c.map((x,j)=>`<button class="chap${j===i?" on":""}" data-chap="${j}"><span class="ts">${fmtT(x.t)}</span><b>${esc(x.title)}</b><span class="eq"><i></i><i></i><i></i></span></button>`).join("")}</div></section>
+ <div class="ltabs">${[["chap","Chapitres"],["tr","Transcription"],["eps","Épisodes"]].map(([k,l])=>`<button data-ltab="${k}" aria-pressed="${P.tab===k}">${l}</button>`).join("")}</div>
+ <section id="lpane">${listenPane()}</section>
  <div class="note">Le podcast continue de jouer écran verrouillé, et se pilote depuis les notifications ou des écouteurs Bluetooth. Il est téléchargé automatiquement pour être écouté sans réseau, dans le métro par exemple.</div></div>`}
+P.tab=P.tab||"chap";
+function listenPane(){const c=chapters();const i=curChap(AU.currentTime||0);const hosts=(S.cur.script&&S.cur.script.hosts)||{};
+ if(P.tab==="tr")return c.some(x=>x.lines||x.text)?`<div class="tr">${c.map((x,j)=>`<div class="trc${j===i?" on":""}" data-trc="${j}"><h4>${esc(x.title)}<span>${fmtT(x.t)}</span></h4>${x.lines?x.lines.map(([w,t])=>`<p><b class="${w===hosts.B?"h2":""}">${esc(w)}</b>${esc(t)}</p>`).join(""):`<p>${esc(x.text||"")}</p>`}</div>`).join("")}</div>`:'<div class="note">Pas de transcription pour cet épisode.</div>';
+ if(P.tab==="eps")return `<div class="eps">${S.editions.slice(0,14).map(d=>`<button class="ep${S.cur.date===d?" on":""}" data-ep="${esc(d)}"><span class="ico">${IC.play}</span><span><b>${esc(fmtDate(d))}</b><span>${S.cur.date===d&&S.cur.podcast?Math.round(S.cur.podcast.duration/60)+" min · en cours":"Brief audio"}</span></span></button>`).join("")}</div>`;
+ return `<div class="chaps">${c.map((x,j)=>`<button class="chap${j===i?" on":""}" data-chap="${j}"><span class="ts">${fmtT(x.t)}</span><b>${esc(x.title)}</b><span class="eq"><i></i><i></i><i></i></span></button>`).join("")}</div>`}
+function bindPane(){document.querySelectorAll("[data-chap]").forEach(b=>b.onclick=()=>{seekTo(chapters()[+b.dataset.chap].t+0.01);if(AU.paused)playPause()});
+ document.querySelectorAll("[data-trc]").forEach(b=>b.onclick=()=>{seekTo(chapters()[+b.dataset.trc].t+0.01);if(AU.paused)playPause()});
+ document.querySelectorAll("[data-ep]").forEach(b=>b.onclick=async()=>{const e=await loadEdition(b.dataset.ep);if(!e){toast("Épisode indisponible hors connexion");return}if(!e.podcast){toast("Pas de podcast pour ce jour");return}S.cur=e;AU.pause();render();window.scrollTo({top:0});setTimeout(playPause,150)})}
+document.addEventListener("click",ev=>{const t=ev.target.closest("[data-ltab]");if(!t)return;P.tab=t.dataset.ltab;document.querySelectorAll("[data-ltab]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ltab===P.tab));$("#lpane").innerHTML=listenPane();bindPane();if(P.tab==="tr"){const on=$(".trc.on");on&&on.scrollIntoView({block:"center",behavior:"smooth"})}});
 function syncPlayer(){const e=S.cur;
  if(!e.podcast){const b=$("#ttsBtn");if(b)b.onclick=()=>ttsToggle();return}
  $("#pPlay").onclick=playPause;$("#pBack").onclick=()=>seekTo(AU.currentTime-15);$("#pFwd").onclick=()=>seekTo(AU.currentTime+30);$("#pPrev").onclick=()=>jumpChap(-1);$("#pNext").onclick=()=>jumpChap(1);
  const sc=$("#pScrub");sc.addEventListener("input",()=>{sc.dragging=true;$("#pT").textContent=fmtT(+sc.value)});sc.addEventListener("change",()=>{sc.dragging=false;seekTo(+sc.value)});
  $("#pRate").onclick=()=>{const R=[1,1.15,1.3,1.5,0.9];P.rate=R[(R.indexOf(P.rate)+1)%R.length];AU.playbackRate=P.rate;lsSet("aube_rate",P.rate);$("#pRate").textContent="Vitesse ×"+String(P.rate).replace(".",",")};
  $("#pSleep").onclick=()=>{const O=[0,10,20,30];const cur=P.sleepMin||0;P.sleepMin=O[(O.indexOf(cur)+1)%O.length];clearTimeout(P.sleepT);if(P.sleepMin){P.sleepAt=Date.now()+P.sleepMin*60000;P.sleepT=setTimeout(()=>{AU.pause();P.sleepAt=0;P.sleepMin=0;toast("Minuteur terminé")},P.sleepMin*60000);toast("Arrêt dans "+P.sleepMin+" min")}else{P.sleepAt=0;toast("Minuteur désactivé")}$("#pSleep").textContent=P.sleepMin?"Arrêt dans "+P.sleepMin+" min":"Minuteur"};
- document.querySelectorAll("[data-chap]").forEach(b=>b.onclick=()=>{seekTo(chapters()[+b.dataset.chap].t+0.01);if(AU.paused)playPause()});
+ bindPane();
  offlineStatus()}
 async function offlineStatus(){const o=$("#offl");if(!o||!S.cur.podcast)return;if(!("caches" in window)){o.textContent="";return}
  const c=await caches.open("aube-audio");const hit=await c.match(absURL(S.cur.podcast.src));

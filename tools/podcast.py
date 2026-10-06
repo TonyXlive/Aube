@@ -5,6 +5,7 @@ Usage : python3 tools/podcast.py editions/AAAA-MM-JJ.json --voice chemin/voix.on
 Écrit podcast/AAAA-MM-JJ.ogg et ajoute un bloc "podcast" dans l'édition.
 """
 import argparse, json, os, re, subprocess, sys, tempfile, wave
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from datetime import date
 
 CATS = [("une", "À la une"), ("monde", "Monde"), ("france", "France"), ("local", "Lyon et l'Isère"),
@@ -28,7 +29,7 @@ def say_date(iso):
     return f"{JOURS[dt.weekday()]} {'premier' if d == 1 else d} {MOIS[m-1]}"
 
 def norm(t):
-    t = str(t or "")
+    t = re.sub(r"<[a-z ]+>", " ", str(t or ""))
     t = t.replace("«", "").replace("»", "").replace("“", "").replace("”", "").replace('"', "")
     t = re.sub(r"(\d)\s?Md€", r"\1 milliards d'euros", t)
     t = re.sub(r"(\d)\s?M€", r"\1 millions d'euros", t)
@@ -106,10 +107,13 @@ VOIX = {"A": ["fr-FR-VivienneMultilingualNeural", "fr-FR-DeniseNeural"],
         "B": ["fr-FR-RemyMultilingualNeural", "fr-FR-HenriNeural"]}
 VOIX_KO = set()
 VOIX_OK = set()
+MODELE_OK = set()
+
+TAGS = re.compile(r"<(short pause|long pause|breath|sigh|laugh|laughs|cough)>", re.I)
 
 def light(t):
     """Normalisation légère pour les voix neuronales (elles lisent bien sigles, % et chiffres)."""
-    t = str(t or "")
+    t = TAGS.sub(" ", str(t or ""))
     for a, b in (("«", ""), ("»", ""), ("“", ""), ("”", ""), ('"', ""), ("·", ","), ("≈", "environ ")):
         t = t.replace(a, b)
     t = re.sub(r"(\d)\s?Md€", r"\1 milliards d'euros", t)
@@ -197,7 +201,7 @@ def script_chapters(ed):
     """Script radio écrit par l'IA : {"chapters":[{"title":..,"lines":[{"who":"A","text":..}]}]}"""
     out = []
     for c in (ed.get("script") or {}).get("chapters", []):
-        lines = [(l.get("who", "A") if l.get("who") in ("A", "B") else "A", l.get("text", "")) for l in c.get("lines", []) if l.get("text")]
+        lines = [(l.get("who", "A") if l.get("who") in ("A", "B") else "A", l.get("text", ""), l.get("style")) for l in c.get("lines", []) if l.get("text")]
         if lines:
             out.append((c.get("title") or "Chapitre", lines))
     return out
@@ -224,7 +228,7 @@ def main():
     ap.add_argument("edition"); ap.add_argument("--voice", default="")
     ap.add_argument("--out-dir", default="podcast"); ap.add_argument("--length-scale", type=float, default=0.95)
     ap.add_argument("--bitrate", default="28k")
-    ap.add_argument("--engine", choices=["piper", "edge"], default="piper")
+    ap.add_argument("--engine", choices=["piper", "edge", "gemini"], default="piper")
     ap.add_argument("--rate", default="+4%")
     a = ap.parse_args()
     ed = json.load(open(a.edition, encoding="utf-8"))
@@ -237,11 +241,16 @@ def main():
     for i, (title, lines) in enumerate(chapters):
         p = os.path.join(tmp, f"c{i:02d}.wav")
         if scripted:
-            if a.engine == "edge":
-                edge_synth([(w, light(x)) for w, x in lines], p, a.rate)
+            if a.engine == "gemini":
+                import gemini_tts
+                hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
+                nom = {"A": "Léa", "B": "Hugo"}
+                MODELE_OK.add(gemini_tts.dialogue([(nom[w], x.strip(), st) for w, x, st in lines], p))
+            elif a.engine == "edge":
+                edge_synth([(w, light(x)) for w, x, _ in lines], p, a.rate)
             else:
-                synth("\n".join(norm(x) for _, x in lines), a.voice, p, a.length_scale)
-            lines = [x for _, x in lines]
+                synth("\n".join(norm(x) for _, x, _ in lines), a.voice, p, a.length_scale)
+            lines = [light(x) for _, x, _ in lines]
         elif a.engine == "edge":
             edge_synth(segments_for(title, lines), p, a.rate)
         else:
@@ -259,7 +268,11 @@ def main():
             parts.append(jg); t += wav_dur(jg)
         elif 0 < i < len(chapters):
             parts.append(st); t += wav_dur(st)
-        meta.append({"t": round(t, 2), "title": title, "text": " ".join(x for x in lines if x)})
+        entry = {"t": round(t, 2), "title": title, "text": " ".join(x for x in lines if x)}
+        if scripted:
+            hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
+            entry["lines"] = [[hosts.get(w, w), light(x)] for w, x, _ in scripted[i][1]]
+        meta.append(entry)
         parts += [p, sil]
         t += wav_dur(p) + 0.9
     norm_parts = []
@@ -270,14 +283,15 @@ def main():
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as f:
         f.writelines(f"file '{p}'\n" for p in norm_parts)
-    out = os.path.join(a.out_dir, ed["date"] + ("-v.ogg" if a.engine == "edge" else ".ogg"))
+    out = os.path.join(a.out_dir, ed["date"] + {"edge": "-v.ogg", "gemini": "-g.ogg"}.get(a.engine, ".ogg"))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ac", "1", "-ar", "24000",
                     "-c:a", "libopus", "-b:a", a.bitrate, "-application", "voip", out], check=True)
     old = (ed.get("podcast") or {}).get("src")
     ed["podcast"] = {"src": out.replace(os.sep, "/"), "duration": round(t, 1), "chapters": meta,
-                     "voice": ("neural2" if scripted else "neural") if a.engine == "edge" else "piper",
-                     "format": "emission" if scripted else "lecture", "voices": sorted(VOIX_OK)}
+                     "voice": {"edge": "neural2" if scripted else "neural", "gemini": "gemini"}.get(a.engine, "piper"),
+                     "format": "emission" if scripted else "lecture",
+                     "voices": sorted(MODELE_OK) if a.engine == "gemini" else sorted(VOIX_OK)}
     if old and old != ed["podcast"]["src"] and os.path.exists(old):
         os.remove(old)
     json.dump(ed, open(a.edition, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

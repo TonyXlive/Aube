@@ -1,7 +1,10 @@
 name: Publier Aube
 
-# À chaque nouvelle édition : refait le podcast avec des voix neuronales naturelles
-# (gratuites, via edge-tts). GitHub Pages republie ensuite le site tout seul.
+# À chaque nouvelle édition : enregistre l'émission avec les voix les plus naturelles disponibles.
+#   1. Gemini TTS (dialogue à deux voix natif) si le secret GEMINI_API_KEY existe
+#   2. sinon, ou en cas d'échec : voix Microsoft (edge-tts, gratuites)
+#   3. sinon : la version de secours déjà présente reste en place
+# GitHub Pages republie ensuite le site tout seul.
 on:
   push:
     branches: [main]
@@ -17,7 +20,7 @@ concurrency:
 jobs:
   podcast:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -27,28 +30,41 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
           pip install -q edge-tts
-      - name: Podcast voix naturelles
-        id: gen
+      - name: Enregistrer l'émission
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           git config user.name "Aube bot"
           git config user.email "aube-bot@users.noreply.github.com"
           git pull -q --rebase origin main || true
           LATEST=$(python3 -c "import json;print(json.load(open('editions/index.json'))['latest'])")
           F="editions/$LATEST.json"
-          OK=$(python3 -c "
-          import json
+          ETAT=$(python3 -c "
+          import json, os
           d = json.load(open('$F')); v = (d.get('podcast') or {}).get('voice', '')
-          print('oui' if v == 'neural2' or (v == 'neural' and not d.get('script')) else 'non')")
-          if [ "$OK" = "oui" ]; then echo "Déjà en voix naturelles."; exit 0; fi
-          if python3 tools/podcast.py "$F" --engine edge --rate=+0%; then
-            ls -1 podcast/*.ogg 2>/dev/null | sort -r | tail -n +15 | xargs -r git rm -q
-            git add -A
-            if git commit -q -m "Podcast voix naturelles du $LATEST"; then
-              for essai in 1 2 3; do
-                git pull -q --rebase origin main && git push -q origin HEAD:main && break
-                sleep 10
-              done
+          cle = bool(os.environ.get('GEMINI_API_KEY'))
+          if v == 'gemini': print('fait')
+          elif cle: print('gemini')
+          elif v == 'neural2' or (v == 'neural' and not d.get('script')): print('fait')
+          else: print('edge')")
+          echo "Étape : $ETAT"
+          [ "$ETAT" = "fait" ] && exit 0
+          OK=non
+          if [ "$ETAT" = "gemini" ]; then
+            python3 tools/podcast.py "$F" --engine gemini && OK=gemini || echo "::warning::Gemini indisponible, bascule sur les voix Microsoft."
+          fi
+          if [ "$OK" = "non" ]; then
+            V=$(python3 -c "import json;print((json.load(open('$F')).get('podcast') or {}).get('voice',''))")
+            if [ "$V" != "neural2" ]; then
+              python3 tools/podcast.py "$F" --engine edge --rate=+0% && OK=edge || echo "::warning::Voix Microsoft indisponibles, la version de secours reste en place."
             fi
-          else
-            echo "::warning::Voix naturelles indisponibles, le podcast reste en voix de secours."
+          fi
+          [ "$OK" = "non" ] && exit 0
+          ls -1 podcast/*.ogg 2>/dev/null | sort -r | tail -n +22 | xargs -r git rm -q
+          git add -A
+          if git commit -q -m "Podcast ($OK) du $LATEST"; then
+            for essai in 1 2 3; do
+              git pull -q --rebase origin main && git push -q origin HEAD:main && break
+              sleep 10
+            done
           fi
