@@ -40,7 +40,7 @@ jobs:
           d = json.load(open('$F')); v = (d.get('podcast') or {}).get('voice', '')
           print('oui' if v == 'neural2' or (v == 'neural' and not d.get('script')) else 'non')")
           if [ "$OK" = "oui" ]; then echo "Déjà en voix naturelles."; exit 0; fi
-          if python3 tools/podcast.py "$F" --engine edge --rate=+6%; then
+          if python3 tools/podcast.py "$F" --engine edge --rate=+0%; then
             ls -1 podcast/*.ogg 2>/dev/null | sort -r | tail -n +15 | xargs -r git rm -q
             git add -A
             if git commit -q -m "Podcast voix naturelles du $LATEST"; then

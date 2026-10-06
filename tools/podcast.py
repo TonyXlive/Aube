@@ -152,12 +152,20 @@ def edge_synth(segments, out, rate):
     asyncio.run(go())
     gap = os.path.join(tmp, "gap.wav")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
-                    "-t", "0.32", "-sample_fmt", "s16", gap], check=True)
+                    "-t", "0.42", "-sample_fmt", "s16", gap], check=True)
+    gap_q = os.path.join(tmp, "gapq.wav")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+                    "-t", "0.16", "-sample_fmt", "s16", gap_q], check=True)
+    textes = [t for _, t in segments if t.strip()]
     wavs = []
     for k, f in enumerate(files):
         w = f[:-4] + ".wav"
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f, "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", w], check=True)
-        wavs += [w, gap]
+        # on coupe les silences de début/fin de chaque réplique pour un enchaînement plus vif
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f, "-af",
+                        "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.08,areverse",
+                        "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", w], check=True)
+        # après une question, la réponse arrive vite ; sinon une respiration normale
+        wavs += [w, gap_q if k < len(textes) and textes[k].rstrip().endswith("?") else gap]
     lst = os.path.join(tmp, "l.txt")
     with open(lst, "w") as fh:
         for f in wavs:

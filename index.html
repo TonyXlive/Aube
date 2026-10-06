@@ -154,6 +154,7 @@ main{padding:6px 16px 0;display:flex;flex-direction:column;gap:26px}
 .sheet .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .ghost{height:44px;border-radius:13px;background:var(--surface-2);font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px}
 .ghost svg{width:16px;height:16px}
+.ctx{background:var(--surface-2);border-radius:14px;padding:12px 14px;margin:0 0 14px}.ctx b{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}.ctx p{margin:0;font-size:15px;line-height:1.55}
 .url{font-family:var(--f-mono);font-size:11px;color:var(--ink-2);word-break:break-all;margin-top:10px}
 
 .archive{display:flex;gap:8px;flex-wrap:wrap}
@@ -346,7 +347,7 @@ function card(a,big){const c=CAT[a.cat]||CAT.all;const k=keyOf(a);const sv=!!S.s
  return `<article><div class="card${big?" big":""}${rd?" read":""}" role="button" tabindex="0" data-open="${esc(k)}">
   <div class="row"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${esc(a.importance)}">${esc(IMP[a.importance]||"")}</span></div>
   <h3>${esc(a.title)}</h3><p>${esc(a.summary)}</p>
-  <div class="foot"><span class="src">${esc(initials(a.source))}</span><span>${esc(a.source)}</span>${a.reliability?`<span>· ${esc(a.reliability)}</span>`:""}<span class="readmark">✓ Lu</span>
+  <div class="foot"><span class="src">${esc(initials(a.source))}</span><span>${esc(a.source)}</span>${a.reliability?`<span>· ${esc(a.reliability)}</span>`:""}${a.context?`<span>· 💡 contexte</span>`:""}<span class="readmark">✓ Lu</span>
   <button class="bm" data-save="${esc(k)}" aria-pressed="${sv}" aria-label="${sv?"Retirer des favoris":"Ajouter aux favoris"}">${bmIcon()}</button></div>
  </div></article>`}
 function keyOf(a){return (S.cur?S.cur.date:"")+"|"+(a.id||a.title)}
@@ -407,7 +408,7 @@ function render(){
 
 function openSheet(k){const a=allArticles().find(x=>keyOf(x)===k);if(!a)return;markRead(k);document.querySelectorAll(`[data-open="${CSS.escape(k)}"]`).forEach(n=>n.classList.add("read"));const c=CAT[a.cat]||CAT.all;const sv=!!S.saved[k];
  $("#sheet").innerHTML=`<div class="grab"></div><button class="sclose" data-close="1" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button><div class="kv"><span class="tag" style="--c:${c.c}">${esc(c.label)}</span><span class="pill ${esc(a.importance)}">${esc(IMP[a.importance]||"")}</span>${a.reliability?`<span class="pill savoir">Fiabilité : ${esc(a.reliability)}</span>`:""}</div>
- <h2 id="sTitle">${esc(a.title)}</h2><p class="body">${esc(a.summary)}</p>
+ <h2 id="sTitle">${esc(a.title)}</h2><p class="body">${esc(a.summary)}</p>${a.context?`<div class="ctx"><b>Pour comprendre</b><p>${esc(a.context)}</p></div>`:""}
  <div class="kv"><span class="src">${esc(initials(a.source))}</span><b style="color:var(--ink)">${esc(a.source)}</b><span>· ${esc(host(a.url))}</span></div>
  ${a.url?`<a class="cta" href="${esc(a.url)}" target="_blank" rel="noopener">Lire l'article complet <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M8 7h9v9"/></svg></a>`:""}
  <div class="row2"><button class="ghost" data-save="${esc(k)}" aria-pressed="${sv}">${bmIcon()}${sv?"Enregistré":"Enregistrer"}</button><button class="ghost" id="copyBtn">${navigator.share?"Partager":"Copier le lien"}</button></div>
