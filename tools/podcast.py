@@ -160,7 +160,22 @@ def _silences(path):
             out.append((st + float(m.group(1))) / 2); st = None
     return out
 
-def gemini_chapitres(scripted, ed, tmp, max_mots=700):
+def gemini_chapitres(scripted, ed, tmp, max_mots=950):
+    """Enregistre tout l'épisode avec UN SEUL modèle Gemini (sinon le timbre des voix change
+    d'un morceau à l'autre). Si un modèle échoue en cours de route, on recommence tout
+    l'épisode avec le modèle suivant."""
+    import gemini_tts
+    derniere = None
+    for modele in gemini_tts.MODELES:
+        MODELE_OK.clear()
+        try:
+            return _gemini_episode(scripted, ed, tmp, max_mots, [modele])
+        except Exception as e:
+            derniere = e
+            print(f"  gemini : épisode impossible avec {modele} ({e}), essai avec le modèle suivant", file=sys.stderr)
+    raise RuntimeError(f"Gemini TTS indisponible : {derniere}")
+
+def _gemini_episode(scripted, ed, tmp, max_mots, modeles):
     """Regroupe les chapitres en peu de requêtes (quota gratuit : 10/jour), puis recoupe
     l'audio en chapitres aux silences les plus proches des frontières estimées."""
     import gemini_tts
@@ -178,14 +193,14 @@ def gemini_chapitres(scripted, ed, tmp, max_mots=700):
     for g, idx in enumerate(groupes):
         turns = [(nom[w], x.strip(), st) for i in idx for w, x, st in scripted[i][1]]
         gw = os.path.join(tmp, f"g{g}.wav")
-        MODELE_OK.add(gemini_tts.dialogue(turns, gw))
+        MODELE_OK.add(gemini_tts.dialogue(turns, gw, modeles))
         total = wav_dur(gw)
         nb = sum(len(t.split()) for _, t, _ in turns)
         if nb / max(total, 1) * 60 > 290:  # débit impossible : l'audio a été tronqué
             print(f"  gemini : audio tronqué ({total:.0f} s pour {nb} mots), nouvel essai en deux moitiés", file=sys.stderr)
             moitie = len(turns) // 2
             g1, g2 = gw[:-4] + "a.wav", gw[:-4] + "b.wav"
-            gemini_tts.dialogue(turns[:moitie], g1); gemini_tts.dialogue(turns[moitie:], g2)
+            gemini_tts.dialogue(turns[:moitie], g1, modeles); gemini_tts.dialogue(turns[moitie:], g2, modeles)
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", g1, "-i", g2, "-filter_complex",
                             "[0:a][1:a]concat=n=2:v=0:a=1", "-ac", "1", "-ar", "24000", gw], check=True)
             total = wav_dur(gw)

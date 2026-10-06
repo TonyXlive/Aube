@@ -77,13 +77,14 @@ def _generate_content(model, turns, key):
 
 ETAT = {"ok": None, "erreurs": []}  # mémorise la combinaison qui marche pour les chapitres suivants
 
-def dialogue(turns, path):
-    """turns : liste de (« Léa » | « Hugo », texte, style ou None). Écrit un WAV."""
+def dialogue(turns, path, modeles=None):
+    """turns : liste de (« Léa » | « Hugo », texte, style ou None). Écrit un WAV.
+    modeles : limite les modèles autorisés (pour garder le même modèle sur tout l'épisode)."""
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY absente")
-    tous = [(m, "generate" if "2.5" in m else "interactions") for m in MODELES]
-    essais = ([ETAT["ok"]] + [x for x in tous if x != ETAT["ok"]]) if ETAT["ok"] else tous
+    tous = [(m, "generate" if "2.5" in m else "interactions") for m in (modeles or MODELES)]
+    essais = ([ETAT["ok"]] + [x for x in tous if x != ETAT["ok"]]) if ETAT["ok"] in tous else tous
     derniere = None
     for model, fmt in essais:
         for tentative in range(4):
