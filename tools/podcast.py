@@ -292,6 +292,10 @@ def main():
                      "voice": {"edge": "neural2" if scripted else "neural", "gemini": "gemini"}.get(a.engine, "piper"),
                      "format": "emission" if scripted else "lecture",
                      "voices": sorted(MODELE_OK) if a.engine == "gemini" else sorted(VOIX_OK)}
+    if a.engine == "gemini":
+        import gemini_tts
+        if gemini_tts.ETAT["erreurs"]:
+            ed["podcast"]["tts_errors"] = gemini_tts.ETAT["erreurs"]
     if old and old != ed["podcast"]["src"] and os.path.exists(old):
         os.remove(old)
     json.dump(ed, open(a.edition, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

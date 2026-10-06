@@ -15,7 +15,7 @@ STYLE = {
 }
 CONSIGNE = ("Émission d'actualité matinale en français de France, entre deux animateurs qui se connaissent bien. "
             "Conversation vivante et naturelle : vraies intonations de dialogue, petites respirations, "
-            "relances spontanées, jamais de ton de lecture.")
+            "relances spontanées, débit posé et détendu, jamais de ton de lecture.")
 
 def _post(url, body, key, timeout=240):
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), method="POST",
@@ -73,7 +73,7 @@ def _generate_content(model, turns, key):
                                         for s, v in VOIX.items()]}}}}
     return _post(f"{API}/models/{model}:generateContent", body, key)
 
-ETAT = {"ok": None}  # mémorise la combinaison qui marche pour les chapitres suivants
+ETAT = {"ok": None, "erreurs": []}  # mémorise la combinaison qui marche pour les chapitres suivants
 
 def dialogue(turns, path):
     """turns : liste de (« Léa » | « Hugo », texte, style ou None). Écrit un WAV."""
@@ -92,6 +92,7 @@ def dialogue(turns, path):
             except urllib.error.HTTPError as e:
                 msg = e.read().decode("utf-8", "ignore")[:300]
                 derniere = f"{model}/{fmt} HTTP {e.code} {msg}"
+                if len(ETAT["erreurs"]) < 6: ETAT["erreurs"].append(derniere[:240])
                 print("  gemini :", derniere, file=sys.stderr)
                 if e.code in (429, 500, 502, 503, 504):
                     time.sleep(min(60, 8 * (tentative + 1)))
