@@ -1,0 +1,53 @@
+name: Publier Aube
+
+# À chaque nouvelle édition : refait le podcast avec des voix neuronales naturelles
+# (gratuites, via edge-tts), puis met le site en ligne.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  podcast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Outils audio
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+          pip install -q edge-tts
+      - name: Podcast voix naturelles
+        id: gen
+        run: |
+          LATEST=$(python3 -c "import json;print(json.load(open('editions/index.json'))['latest'])")
+          F="editions/$LATEST.json"
+          VOICE=$(python3 -c "import json;print((json.load(open('$F')).get('podcast') or {}).get('voice',''))")
+          if [ "$VOICE" = "neural" ]; then echo "Déjà en voix naturelles."; exit 0; fi
+          if python3 tools/podcast.py "$F" --engine edge; then
+            ls -1 podcast/*.ogg 2>/dev/null | sort -r | tail -n +15 | xargs -r git rm -q
+            git config user.name "Aube bot"
+            git config user.email "aube-bot@users.noreply.github.com"
+            git add -A
+            git commit -m "Podcast voix naturelles du $LATEST" && git push
+          else
+            echo "::warning::Voix naturelles indisponibles, le podcast reste en voix de secours."
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4

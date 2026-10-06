@@ -100,6 +100,69 @@ def build_chapters(ed):
                               "Bonne journée, et à demain matin."]))
     return ch
 
+VOIX = ["fr-FR-HenriNeural", "fr-FR-DeniseNeural"]
+
+def light(t):
+    """Normalisation légère pour les voix neuronales (elles lisent bien sigles, % et chiffres)."""
+    t = str(t or "")
+    for a, b in (("«", ""), ("»", ""), ("“", ""), ("”", ""), ('"', ""), ("·", ","), ("≈", "environ ")):
+        t = t.replace(a, b)
+    t = re.sub(r"(\d)\s?Md€", r"\1 milliards d'euros", t)
+    t = re.sub(r"(\d)\s?M€", r"\1 millions d'euros", t)
+    t = re.sub(r"(\d)\s?Md\$", r"\1 milliards de dollars", t)
+    t = re.sub(r"(\d)\s?M\$", r"\1 millions de dollars", t)
+    t = re.sub(r"\bJ-(\d+)", r"J moins \1", t)
+    t = re.sub(r"\bOL\b", "l'OL", t).replace("l'l'OL", "l'OL").replace("Lens – l'OL", "Lens contre l'OL")
+    t = t.replace(" – ", ", ").replace(" — ", ", ")
+    return re.sub(r"\s+", " ", t).strip()
+
+def edge_synth(segments, out, rate):
+    """segments : liste de (voix, texte). Produit un mp3 par segment puis les assemble."""
+    import asyncio, edge_tts
+    tmp = tempfile.mkdtemp()
+    files = []
+    async def go():
+        for i, (v, txt) in enumerate(segments):
+            if not txt.strip():
+                continue
+            f = os.path.join(tmp, f"s{i:03d}.mp3")
+            for essai in range(3):
+                try:
+                    await edge_tts.Communicate(txt, v, rate=rate).save(f)
+                    break
+                except Exception:
+                    if essai == 2:
+                        raise
+                    await asyncio.sleep(3)
+            files.append(f)
+    asyncio.run(go())
+    lst = os.path.join(tmp, "l.txt")
+    with open(lst, "w") as fh:
+        for f in files:
+            fh.write(f"file '{f}'\n")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
+                    "-af", "apad=pad_dur=0.6", "-ac", "1", "-ar", "24000", out], check=True)
+
+def segments_for(title, lines):
+    """Deux voix qui se relaient : Henri présente, Denise et Henri alternent les sujets."""
+    segs, who = [], 0
+    if not lines:
+        return segs
+    segs.append((VOIX[0], light(lines[0])))
+    rest = lines[1:]
+    blocks, cur = [], []
+    for x in rest:
+        if x == "":
+            blocks.append(cur); cur = []
+        else:
+            cur.append(x)
+    if cur:
+        blocks.append(cur)
+    for b in blocks:
+        who = 1 - who if title not in ("Introduction", "Conclusion") else 0
+        segs.append((VOIX[who], light(" ".join(b))))
+    return segs
+
 def synth(text, voice, out, length_scale):
     subprocess.run([sys.executable, "-m", "piper", "-m", voice, "-f", out, "--length-scale", str(length_scale),
                     "--sentence-silence", "0.35"], input=text.encode("utf-8"), check=True,
@@ -111,9 +174,11 @@ def wav_dur(p):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("edition"); ap.add_argument("--voice", required=True)
+    ap.add_argument("edition"); ap.add_argument("--voice", default="")
     ap.add_argument("--out-dir", default="podcast"); ap.add_argument("--length-scale", type=float, default=0.95)
     ap.add_argument("--bitrate", default="28k")
+    ap.add_argument("--engine", choices=["piper", "edge"], default="piper")
+    ap.add_argument("--rate", default="+4%")
     a = ap.parse_args()
     ed = json.load(open(a.edition, encoding="utf-8"))
     chapters = build_chapters(ed)
@@ -122,9 +187,12 @@ def main():
     parts, meta, t = [], [], 0.0
     sil = os.path.join(tmp, "sil.wav")
     for i, (title, lines) in enumerate(chapters):
-        text = "\n".join(norm(x) for x in lines if x is not None)
         p = os.path.join(tmp, f"c{i:02d}.wav")
-        synth(text, a.voice, p, a.length_scale)
+        if a.engine == "edge":
+            edge_synth(segments_for(title, lines), p, a.rate)
+        else:
+            text = "\n".join(norm(x) for x in lines if x is not None)
+            synth(text, a.voice, p, a.length_scale)
         if i == 0:
             with wave.open(p) as w:
                 rate, sw, nch = w.getframerate(), w.getsampwidth(), w.getnchannels()
@@ -137,11 +205,15 @@ def main():
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as f:
         f.writelines(f"file '{p}'\n" for p in parts)
-    out = os.path.join(a.out_dir, ed["date"] + ".ogg")
+    out = os.path.join(a.out_dir, ed["date"] + ("-v.ogg" if a.engine == "edge" else ".ogg"))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ac", "1", "-ar", "24000",
                     "-c:a", "libopus", "-b:a", a.bitrate, "-application", "voip", out], check=True)
-    ed["podcast"] = {"src": out.replace(os.sep, "/"), "duration": round(t, 1), "chapters": meta}
+    old = (ed.get("podcast") or {}).get("src")
+    ed["podcast"] = {"src": out.replace(os.sep, "/"), "duration": round(t, 1), "chapters": meta,
+                     "voice": "neural" if a.engine == "edge" else "piper"}
+    if old and old != ed["podcast"]["src"] and os.path.exists(old):
+        os.remove(old)
     json.dump(ed, open(a.edition, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
     print(f"{out} · {t/60:.1f} min · {os.path.getsize(out)/1e6:.1f} Mo · {len(meta)} chapitres")
 
