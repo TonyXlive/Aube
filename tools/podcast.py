@@ -100,7 +100,11 @@ def build_chapters(ed):
                               "Bonne journée, et à demain matin."]))
     return ch
 
-VOIX = ["fr-FR-HenriNeural", "fr-FR-DeniseNeural"]
+# Voix neuronales : A = Léa, B = Hugo. Les voix « Multilingual » sont plus expressives ;
+# si elles ne répondent pas, on bascule sur les voix françaises classiques.
+VOIX = {"A": ["fr-FR-VivienneMultilingualNeural", "fr-FR-DeniseNeural"],
+        "B": ["fr-FR-RemyMultilingualNeural", "fr-FR-HenriNeural"]}
+VOIX_KO = set()
 
 def light(t):
     """Normalisation légère pour les voix neuronales (elles lisent bien sigles, % et chiffres)."""
@@ -117,7 +121,7 @@ def light(t):
     return re.sub(r"\s+", " ", t).strip()
 
 def edge_synth(segments, out, rate):
-    """segments : liste de (voix, texte). Produit un mp3 par segment puis les assemble."""
+    """segments : liste de (locuteur A/B, texte). Produit un mp3 par réplique puis les assemble."""
     import asyncio, edge_tts
     tmp = tempfile.mkdtemp()
     files = []
@@ -126,29 +130,45 @@ def edge_synth(segments, out, rate):
             if not txt.strip():
                 continue
             f = os.path.join(tmp, f"s{i:03d}.mp3")
-            for essai in range(3):
-                try:
-                    await edge_tts.Communicate(txt, v, rate=rate).save(f)
+            ok = False
+            for voix in [x for x in VOIX.get(v, [v]) if x not in VOIX_KO]:
+                for essai in range(3):
+                    try:
+                        await edge_tts.Communicate(txt, voix, rate=rate).save(f)
+                        ok = os.path.getsize(f) > 1000
+                        if ok:
+                            break
+                    except Exception as e:
+                        print(f"  {voix} : essai {essai+1} raté ({type(e).__name__})", file=sys.stderr)
+                        await asyncio.sleep(2)
+                if ok:
                     break
-                except Exception:
-                    if essai == 2:
-                        raise
-                    await asyncio.sleep(3)
+                VOIX_KO.add(voix)
+            if not ok:
+                raise RuntimeError("aucune voix neuronale disponible")
             files.append(f)
     asyncio.run(go())
+    gap = os.path.join(tmp, "gap.wav")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono",
+                    "-t", "0.32", "-sample_fmt", "s16", gap], check=True)
+    wavs = []
+    for k, f in enumerate(files):
+        w = f[:-4] + ".wav"
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f, "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", w], check=True)
+        wavs += [w, gap]
     lst = os.path.join(tmp, "l.txt")
     with open(lst, "w") as fh:
-        for f in files:
+        for f in wavs:
             fh.write(f"file '{f}'\n")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
-                    "-af", "apad=pad_dur=0.6", "-ac", "1", "-ar", "24000", out], check=True)
+                    "-ac", "1", "-ar", "24000", out], check=True)
 
 def segments_for(title, lines):
     """Deux voix qui se relaient : Henri présente, Denise et Henri alternent les sujets."""
     segs, who = [], 0
     if not lines:
         return segs
-    segs.append((VOIX[0], light(lines[0])))
+    segs.append(("A", light(lines[0])))
     rest = lines[1:]
     blocks, cur = [], []
     for x in rest:
@@ -160,8 +180,25 @@ def segments_for(title, lines):
         blocks.append(cur)
     for b in blocks:
         who = 1 - who if title not in ("Introduction", "Conclusion") else 0
-        segs.append((VOIX[who], light(" ".join(b))))
+        segs.append(("AB"[who], light(" ".join(b))))
     return segs
+
+def script_chapters(ed):
+    """Script radio écrit par l'IA : {"chapters":[{"title":..,"lines":[{"who":"A","text":..}]}]}"""
+    out = []
+    for c in (ed.get("script") or {}).get("chapters", []):
+        lines = [(l.get("who", "A") if l.get("who") in ("A", "B") else "A", l.get("text", "")) for l in c.get("lines", []) if l.get("text")]
+        if lines:
+            out.append((c.get("title") or "Chapitre", lines))
+    return out
+
+def jingle(path, rate, kind="intro"):
+    """Petit carillon doux généré (aucun son extérieur) : 3 notes à l'intro, 2 entre les chapitres."""
+    notes = [(523.25, 0.0), (659.25, 0.16), (783.99, 0.32)] if kind == "intro" else [(659.25, 0.0), (783.99, 0.14)]
+    total = notes[-1][1] + 1.1
+    expr = "+".join(f"0.18*sin(2*PI*{f}*t)*exp(-4.5*(t-{d}))*gt(t,{d})" for f, d in notes)
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", f"aevalsrc='{expr}':s={rate}:d={total:.2f}",
+                    "-af", f"afade=t=out:st={total - 0.35:.2f}:d=0.35", "-ac", "1", "-ar", str(rate), path], check=True)
 
 def synth(text, voice, out, length_scale):
     subprocess.run([sys.executable, "-m", "piper", "-m", voice, "-f", out, "--length-scale", str(length_scale),
@@ -181,14 +218,21 @@ def main():
     ap.add_argument("--rate", default="+4%")
     a = ap.parse_args()
     ed = json.load(open(a.edition, encoding="utf-8"))
-    chapters = build_chapters(ed)
+    scripted = script_chapters(ed)
+    chapters = scripted or build_chapters(ed)
     os.makedirs(a.out_dir, exist_ok=True)
     tmp = tempfile.mkdtemp()
     parts, meta, t = [], [], 0.0
     sil = os.path.join(tmp, "sil.wav")
     for i, (title, lines) in enumerate(chapters):
         p = os.path.join(tmp, f"c{i:02d}.wav")
-        if a.engine == "edge":
+        if scripted:
+            if a.engine == "edge":
+                edge_synth([(w, light(x)) for w, x in lines], p, a.rate)
+            else:
+                synth("\n".join(norm(x) for _, x in lines), a.voice, p, a.length_scale)
+            lines = [x for _, x in lines]
+        elif a.engine == "edge":
             edge_synth(segments_for(title, lines), p, a.rate)
         else:
             text = "\n".join(norm(x) for x in lines if x is not None)
@@ -199,19 +243,31 @@ def main():
             with wave.open(sil, "wb") as w:
                 w.setnchannels(nch); w.setsampwidth(sw); w.setframerate(rate)
                 w.writeframes(b"\x00" * int(rate * 0.9) * sw * nch)
+        if i == 0:
+            jg = os.path.join(tmp, "j_intro.wav"); jingle(jg, 24000, "intro")
+            st = os.path.join(tmp, "j_st.wav"); jingle(st, 24000, "sting")
+            parts.append(jg); t += wav_dur(jg)
+        elif 0 < i < len(chapters):
+            parts.append(st); t += wav_dur(st)
         meta.append({"t": round(t, 2), "title": title, "text": " ".join(x for x in lines if x)})
         parts += [p, sil]
         t += wav_dur(p) + 0.9
+    norm_parts = []
+    for k, p in enumerate(parts):
+        q = os.path.join(tmp, f"n{k:03d}.wav")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", p, "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", q], check=True)
+        norm_parts.append(q)
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as f:
-        f.writelines(f"file '{p}'\n" for p in parts)
+        f.writelines(f"file '{p}'\n" for p in norm_parts)
     out = os.path.join(a.out_dir, ed["date"] + ("-v.ogg" if a.engine == "edge" else ".ogg"))
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ac", "1", "-ar", "24000",
                     "-c:a", "libopus", "-b:a", a.bitrate, "-application", "voip", out], check=True)
     old = (ed.get("podcast") or {}).get("src")
     ed["podcast"] = {"src": out.replace(os.sep, "/"), "duration": round(t, 1), "chapters": meta,
-                     "voice": "neural" if a.engine == "edge" else "piper"}
+                     "voice": ("neural2" if scripted else "neural") if a.engine == "edge" else "piper",
+                     "format": "emission" if scripted else "lecture"}
     if old and old != ed["podcast"]["src"] and os.path.exists(old):
         os.remove(old)
     json.dump(ed, open(a.edition, "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))

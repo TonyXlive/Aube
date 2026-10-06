@@ -518,7 +518,7 @@ function renderListen(){const e=S.cur;
  if(!e.podcast)return `<div class="empty"><div class="sun" style="margin:0 auto"><i></i></div><h3>Pas de podcast pour cette édition</h3><p>Le brief audio est préparé chaque nuit avec l'édition. Tu peux quand même te faire lire les titres par la voix du téléphone.</p><button class="cta" id="ttsBtn" style="margin-top:16px">${speechSynthesis&&speechSynthesis.speaking?"Arrêter la lecture":"Lire avec la voix du téléphone"}</button></div>`;
  ensureLoaded();const c=chapters();const d=dur();const t=AU.currentTime||0;const i=curChap(t);
  return `<div class="listenwrap ${AU.paused?"paused":""}" style="display:flex;flex-direction:column;gap:18px">
- <section class="player"><div class="eyebrow">Le brief audio · ${esc(fmtDate(e.date))}</div><h2>${esc(e.headline||"L'essentiel du jour")}</h2>
+ <section class="player"><div class="eyebrow">${e.script&&e.script.hosts?"Avec "+esc(e.script.hosts.A)+" et "+esc(e.script.hosts.B):"Le brief audio"} · ${esc(fmtDate(e.date))}</div><h2>${esc(e.headline||"L'essentiel du jour")}</h2>
   <div class="now" id="pNow">${esc(c[i]?c[i].title:"")}</div>
   <input type="range" class="scrub" id="pScrub" min="0" max="${d}" step="1" value="${t}" aria-label="Position">
   <div class="ptimes"><span id="pT">${fmtT(t)}</span><span id="pR">-${fmtT(d-t)}</span></div>

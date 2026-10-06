@@ -32,9 +32,12 @@ jobs:
         run: |
           LATEST=$(python3 -c "import json;print(json.load(open('editions/index.json'))['latest'])")
           F="editions/$LATEST.json"
-          VOICE=$(python3 -c "import json;print((json.load(open('$F')).get('podcast') or {}).get('voice',''))")
-          if [ "$VOICE" = "neural" ]; then echo "Déjà en voix naturelles."; exit 0; fi
-          if python3 tools/podcast.py "$F" --engine edge; then
+          OK=$(python3 -c "
+          import json
+          d = json.load(open('$F')); v = (d.get('podcast') or {}).get('voice', '')
+          print('oui' if v == 'neural2' or (v == 'neural' and not d.get('script')) else 'non')")
+          if [ "$OK" = "oui" ]; then echo "Déjà en voix naturelles."; exit 0; fi
+          if python3 tools/podcast.py "$F" --engine edge --rate=+6%; then
             ls -1 podcast/*.ogg 2>/dev/null | sort -r | tail -n +15 | xargs -r git rm -q
             git config user.name "Aube bot"
             git config user.email "aube-bot@users.noreply.github.com"
