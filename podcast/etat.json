@@ -1,14 +1,8 @@
 {
- "date": "2026-10-06",
+ "date": "2026-10-07",
  "engine": "gemini",
- "ok": false,
+ "ok": true,
  "errors": [
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h46m5s or upgrade your tier at https://ai.dev/rate-limit.\",\"code\"",
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h45m37s or upgrade your tier at https://ai.dev/rate-limit.\",\"code",
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h45m28s or upgrade your tier at https://ai.dev/rate-limit.\",\"code",
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h45m1s or upgrade your tier at https://ai.dev/rate-limit.\",\"code\"",
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h44m40s or upgrade your tier at https://ai.dev/rate-limit.\",\"code",
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h44m32s or upgrade your tier at https://ai.dev/rate-limit.\",\"code"
- ],
- "exception": "Gemini TTS indisponible : gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 8h43m52s or upgrade your tier at https://ai.dev/rate-limit.\",\"code\":\"too_many_requests\"}}"
+  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 23h47m35s or upgrade your tier at https://ai.dev/rate-limit.\",\"cod"
+ ]
 }
