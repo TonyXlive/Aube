@@ -16,6 +16,6 @@ python3 tools/podcast.py editions/AAAA-MM-JJ.json --voice fr-siwis-medium.onnx
 Seuls les 7 derniers fichiers audio sont gardés dans `podcast/`.
 
 ### Voix de l'émission
-1. **Gemini TTS** (dialogue natif à deux voix, offre gratuite) — secret GitHub `GEMINI_API_KEY` (clé sur aistudio.google.com). Un épisode = environ 5 requêtes courtes, toutes avec le même modèle pour garder des voix stables ; l’audio de Gemini n’est jamais recoupé (les chapitres sont des repères) (quota gratuit : 10 par jour et par modèle, avec bascule automatique flash → flash-lite).
+1. **Gemini TTS** (dialogue natif à deux voix, offre gratuite) — secret GitHub `GEMINI_API_KEY` (clé sur aistudio.google.com). Un épisode = environ 5 requêtes courtes, toutes avec le même modèle pour garder des voix stables ; l’audio de Gemini n’est jamais recoupé (les chapitres sont des repères) (quota gratuit : 10 par jour et par modèle, avec bascule automatique flash → flash-lite → 3.1 flash, et au moins 25 s entre deux requêtes pour respecter la limite de 3 par minute).
 2. **Piper** (open source, version de secours générée la nuit) si Gemini est indisponible ; nouvel essai automatique à 6h30.
 Réglages facultatifs : `GEMINI_VOICE_A` (Léa, défaut Aoede), `GEMINI_VOICE_B` (Hugo, défaut Puck), `GEMINI_TTS_MODELS`.

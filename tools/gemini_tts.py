@@ -7,7 +7,7 @@ Essaie d'abord l'API Interactions (modèles 3.8), puis l'ancien format generateC
 import base64, io, json, os, re, sys, time, urllib.error, urllib.request, wave
 
 API = "https://generativelanguage.googleapis.com/v1beta"
-MODELES = [m for m in os.environ.get("GEMINI_TTS_MODELS", "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts").split(",") if m]
+MODELES = [m for m in os.environ.get("GEMINI_TTS_MODELS", "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts,gemini-3.1-flash-tts-preview").split(",") if m]
 VOIX = {"Léa": os.environ.get("GEMINI_VOICE_A", "Aoede"), "Hugo": os.environ.get("GEMINI_VOICE_B", "Puck")}
 STYLE = {
     "Léa": "voix féminine française, animatrice de matinale radio, ton détendu, souriant et complice, débit naturel avec de légères variations",
@@ -17,7 +17,16 @@ CONSIGNE = ("Émission d'actualité matinale en français de France, entre deux 
             "Conversation vivante et naturelle : vraies intonations de dialogue, petites respirations, "
             "relances spontanées, débit posé et détendu, jamais de ton de lecture.")
 
+# Offre gratuite : 3 requêtes par minute et 10 par jour, par modèle. On espace donc les appels
+# et on attend plus d'une minute après un refus « par minute » (chaque refus compte dans le quota du jour).
+ECART_MIN = float(os.environ.get("GEMINI_ECART_S", "25"))
+_DERNIER = [0.0]
+
 def _post(url, body, key, timeout=600):
+    attente = _DERNIER[0] + ECART_MIN - time.time()
+    if attente > 0:
+        time.sleep(attente)
+    _DERNIER[0] = time.time()
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), method="POST",
                                  headers={"Content-Type": "application/json", "x-goog-api-key": key})
     with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -83,11 +92,11 @@ def dialogue(turns, path, modeles=None):
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY absente")
-    tous = [(m, "generate" if "2.5" in m else "interactions") for m in (modeles or MODELES)]
+    tous = [(m, "generate" if ("2.5" in m or "3.1" in m) else "interactions") for m in (modeles or MODELES)]
     essais = ([ETAT["ok"]] + [x for x in tous if x != ETAT["ok"]]) if ETAT["ok"] in tous else tous
     derniere = None
     for model, fmt in essais:
-        for tentative in range(4):
+        for tentative in range(3):
             try:
                 rep = (_interactions if fmt == "interactions" else _generate_content)(model, turns, key)
                 _to_wav(_audio_blobs(rep), path)
@@ -101,7 +110,7 @@ def dialogue(turns, path, modeles=None):
                 if e.code == 429 and "per day" in msg:
                     break  # quota du jour épuisé pour ce modèle : on passe au suivant
                 if e.code in (429, 500, 502, 503, 504):
-                    time.sleep(min(60, 8 * (tentative + 1)))
+                    time.sleep(65 if e.code == 429 else 20)
                     continue
                 break  # 400/404 : format ou modèle non pris en charge, on passe au suivant
             except Exception as e:
