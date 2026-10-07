@@ -160,7 +160,7 @@ def _silences(path):
             out.append((st + float(m.group(1))) / 2); st = None
     return out
 
-def gemini_chapitres(scripted, ed, tmp, max_mots=950):
+def gemini_chapitres(scripted, ed, tmp, max_mots=650):
     """Enregistre tout l'épisode avec UN SEUL modèle Gemini (sinon le timbre des voix change
     d'un morceau à l'autre). Si un modèle échoue en cours de route, on recommence tout
     l'épisode avec le modèle suivant."""
@@ -176,8 +176,9 @@ def gemini_chapitres(scripted, ed, tmp, max_mots=950):
     raise RuntimeError(f"Gemini TTS indisponible : {derniere}")
 
 def _gemini_episode(scripted, ed, tmp, max_mots, modeles):
-    """Regroupe les chapitres en peu de requêtes (quota gratuit : 10/jour), puis recoupe
-    l'audio en chapitres aux silences les plus proches des frontières estimées."""
+    """Regroupe les chapitres en quelques requêtes (quota gratuit), sans JAMAIS recouper l'audio
+    à l'intérieur d'un morceau : les chapitres internes deviennent de simples repères de temps
+    (placés sur le silence le plus proche), ce qui évite toute coupure au milieu d'un mot."""
     import gemini_tts
     nom = {"A": "Léa", "B": "Hugo"}
     groupes, cur, n = [], [], 0
@@ -189,38 +190,38 @@ def _gemini_episode(scripted, ed, tmp, max_mots, modeles):
     if cur:
         groupes.append(cur)
     print(f"  gemini : {len(scripted)} chapitres en {len(groupes)} requêtes", file=sys.stderr)
-    fichiers = {}
+    plan = {}
     for g, idx in enumerate(groupes):
-        turns = [(nom[w], x.strip(), st) for i in idx for w, x, st in scripted[i][1]]
-        gw = os.path.join(tmp, f"g{g}.wav")
-        MODELE_OK.add(gemini_tts.dialogue(turns, gw, modeles))
-        total = wav_dur(gw)
+        # pas d'indication de jeu par réplique : elles font varier le timbre des voix
+        turns = [(nom[w], x.strip(), None) for i in idx for w, x, _ in scripted[i][1]]
+        brut = os.path.join(tmp, f"g{g}_brut.wav")
+        MODELE_OK.add(gemini_tts.dialogue(turns, brut, modeles))
+        total = wav_dur(brut)
         nb = sum(len(t.split()) for _, t, _ in turns)
         if nb / max(total, 1) * 60 > 290:  # débit impossible : l'audio a été tronqué
             print(f"  gemini : audio tronqué ({total:.0f} s pour {nb} mots), nouvel essai en deux moitiés", file=sys.stderr)
             moitie = len(turns) // 2
-            g1, g2 = gw[:-4] + "a.wav", gw[:-4] + "b.wav"
+            g1, g2 = brut[:-4] + "a.wav", brut[:-4] + "b.wav"
             gemini_tts.dialogue(turns[:moitie], g1, modeles); gemini_tts.dialogue(turns[moitie:], g2, modeles)
             subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", g1, "-i", g2, "-filter_complex",
-                            "[0:a][1:a]concat=n=2:v=0:a=1", "-ac", "1", "-ar", "24000", gw], check=True)
-            total = wav_dur(gw)
+                            "[0:a][1:a]concat=n=2:v=0:a=1", "-ac", "1", "-ar", "24000", brut], check=True)
+        gw = os.path.join(tmp, f"g{g}.wav")
+        # on ne retire que le silence en tout début et toute fin de morceau
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", brut, "-af",
+                        "silenceremove=start_periods=1:start_threshold=-55dB:start_silence=0.1,areverse,silenceremove=start_periods=1:start_threshold=-55dB:start_silence=0.3,areverse",
+                        "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", gw], check=True)
+        total = wav_dur(gw)
         mots = [sum(len(x.split()) for _, x, _ in scripted[i][1]) for i in idx]
-        bornes, cum = [], 0
-        for m in mots[:-1]:
-            cum += m; bornes.append(total * cum / sum(mots))
         sil = _silences(gw)
-        coupes = []
-        for b in bornes:
-            proches = [s for s in sil if abs(s - b) < 7 and (not coupes or s > coupes[-1] + 1)]
-            coupes.append(min(proches, key=lambda s: abs(s - b)) if proches else b)
-        pts = [0.0] + coupes + [total]
-        for k, i in enumerate(idx):
-            f = os.path.join(tmp, f"c{i:02d}.wav")
-            subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", gw, "-ss", f"{pts[k]:.3f}", "-to", f"{pts[k+1]:.3f}",
-                            "-af", "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.05,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.15,areverse",
-                            "-ac", "1", "-ar", "24000", "-sample_fmt", "s16", f], check=True)
-            fichiers[i] = f
-    return fichiers
+        plan[idx[0]] = ("wav", gw)
+        cum, prev = 0, 0.0
+        for k, i in enumerate(idx[1:], start=1):
+            cum += mots[k - 1]
+            est = total * cum / sum(mots)
+            proches = [s for s in sil if abs(s - est) < 6 and s > prev + 1]
+            off = min(proches, key=lambda s: abs(s - est)) if proches else est
+            plan[i] = ("mark", round(off, 2)); prev = off
+    return plan
 
 def write_etat(date_ed, engine, ok, extra=None):
     try:
@@ -253,7 +254,14 @@ def main():
         p = os.path.join(tmp, f"c{i:02d}.wav")
         if scripted:
             if a.engine == "gemini":
-                p = pre[i]
+                kind, val = pre[i]
+                if kind == "mark":  # chapitre interne à un morceau : simple repère, pas de coupe
+                    entry = {"t": round(gstart + val, 2), "title": title, "text": " ".join(light(x) for _, x, _ in lines)}
+                    hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
+                    entry["lines"] = [[hosts.get(w, w), light(x)] for w, x, _ in lines]
+                    meta.append(entry)
+                    continue
+                p = val
             else:
                 synth("\n".join(norm(x) for _, x, _ in lines), a.voice, p, a.length_scale)
             lines = [light(x) for _, x, _ in lines]
@@ -272,6 +280,7 @@ def main():
             parts.append(jg); t += wav_dur(jg)
         elif 0 < i < len(chapters):
             parts.append(st); t += wav_dur(st)
+        gstart = t
         entry = {"t": round(t, 2), "title": title, "text": " ".join(x for x in lines if x)}
         if scripted:
             hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
