@@ -1,8 +1,6 @@
 {
- "date": "2026-10-07",
+ "date": "2026-10-08",
  "engine": "gemini",
  "ok": true,
- "errors": [
-  "gemini-3.8-flash-tts/interactions HTTP 429 {\"error\":{\"message\":\"Rate limit exceeded for model gemini-3.8-flash-tts (limit: 10 requests per day on Free Tier). Please retry in 23h47m35s or upgrade your tier at https://ai.dev/rate-limit.\",\"cod"
- ]
+ "errors": []
 }
