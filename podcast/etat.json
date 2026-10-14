@@ -1,8 +1,6 @@
 {
- "date": "2026-10-13",
+ "date": "2026-10-14",
  "engine": "gemini",
  "ok": true,
- "errors": [
-  "gemini-3.8-flash-tts/interactions HTTP 503 {\"error\":{\"message\":\"gemini-3.8-flash-tts is currently experiencing high demand, spikes in demand are usually temporary. Please try again later.\",\"code\":\"service_unavailable\"}}"
- ]
+ "errors": []
 }
