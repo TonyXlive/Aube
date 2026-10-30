@@ -1,7 +1,7 @@
 name: Publier Aube
 
-# À chaque nouvelle édition : enregistre l'émission avec Gemini TTS (Léa + un chroniqueur par morceau,
-# offre gratuite : 10 requêtes/jour/modèle, un épisode en consomme environ 7).
+# À chaque nouvelle édition : enregistre l'émission avec Gemini TTS (Robin + un chroniqueur par morceau,
+# offre gratuite : 10 requêtes/jour/modèle, un épisode en consomme environ 8).
 # Si Gemini échoue, la version de secours open source (Piper) générée la nuit reste en place,
 # et une nouvelle tentative est faite à 6h30 (heure de Paris).
 # GitHub Pages republie ensuite le site tout seul.

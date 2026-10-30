@@ -8,26 +8,39 @@ import base64, io, json, os, re, sys, time, urllib.error, urllib.request, wave
 
 API = "https://generativelanguage.googleapis.com/v1beta"
 MODELES = [m for m in os.environ.get("GEMINI_TTS_MODELS", "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts,gemini-3.1-flash-tts-preview").split(",") if m]
-# La rédaction d'Aube : Léa présente, chaque rubrique a son chroniqueur et sa voix.
-# Gemini ne gère que 2 voix par requête : chaque morceau envoyé réunit Léa et UN chroniqueur.
+# La rédaction d'Aube : Robin présente, chaque rubrique a son chroniqueur et sa voix.
+# Gemini ne gère que 2 voix par requête : chaque morceau envoyé réunit Robin et UN chroniqueur.
 VOIX = {
-    "Léa": os.environ.get("GEMINI_VOICE_A", "Aoede"),
-    "Hugo": os.environ.get("GEMINI_VOICE_B", "Puck"),
-    "Camille": os.environ.get("GEMINI_VOICE_C", "Kore"),
-    "Thomas": os.environ.get("GEMINI_VOICE_D", "Charon"),
-    "Inès": os.environ.get("GEMINI_VOICE_E", "Leda"),
-    "Julien": os.environ.get("GEMINI_VOICE_F", "Orus"),
-    "Nadia": os.environ.get("GEMINI_VOICE_G", "Zephyr"),
+    # rédaction actuelle (personnages de manga) : voix Gemini choisies pour coller au caractère
+    "Robin": "Gacrux",       # présentatrice
+    "L": "Schedar",          # actu France et monde
+    "Nami": "Laomedeia",     # économie et bourse
+    "Bulma": "Autonoe",      # tech, IA, Nothing
+    "Shiro": "Leda",         # jeux vidéo
+    "Levi": "Alnilam",       # paie, RH, SIRH
+    "Tanjiro": "Achird",     # Lyon et Nord-Isère
+    "Senku": "Fenrir",       # science, dates, clôture
+    # anciens noms, pour les éditions passées
+    "Léa": "Aoede", "Hugo": "Puck", "Camille": "Kore", "Thomas": "Charon",
+    "Inès": "Leda", "Julien": "Orus", "Nadia": "Zephyr",
 }
 VOIX_DEFAUT = "Puck"
 STYLE = {
-    "Léa": "voix féminine française, présentatrice de matinale radio, ton détendu, souriant et complice, débit naturel avec de légères variations",
-    "Hugo": "voix masculine française, journaliste politique et international, ton posé, chaleureux et précis",
-    "Camille": "voix féminine française, journaliste économie et bourse, ton clair, vif et pédagogue",
-    "Thomas": "voix masculine française, journaliste tech, ton enthousiaste mais mesuré, curieux",
-    "Inès": "voix féminine française, journaliste jeux vidéo, ton enjoué, passionné et naturel",
-    "Julien": "voix masculine française, journaliste social et RH, ton calme, concret et rassurant",
-    "Nadia": "voix féminine française, journaliste locale et sciences, ton chaleureux, proche et curieux",
+    "Robin": "voix féminine française posée et mature, présentatrice de matinale, calme, cultivée, légèrement amusée, chaleureuse",
+    "L": "voix masculine française, ton plutôt monocorde et réfléchi, analytique, phrases précises, pointe d'ironie discrète",
+    "Nami": "voix féminine française vive et énergique, débrouillarde, s'anime dès qu'on parle d'argent",
+    "Bulma": "voix féminine française pétillante et sûre d'elle, ingénieure passionnée de technologie, franche",
+    "Shiro": "voix féminine française jeune, douce et calme, parle peu mais devient passionnée quand il s'agit de jeux",
+    "Levi": "voix masculine française grave, sèche et froide, phrases courtes, très carré, un humour pince-sans-rire",
+    "Tanjiro": "voix masculine française jeune, chaleureuse, sincère et bienveillante, proche des gens",
+    "Senku": "voix masculine française jeune et surexcitée par la science, rapide, sûre d'elle, enthousiaste",
+    "Léa": "voix féminine française, présentatrice de matinale radio, ton détendu, souriant et complice",
+    "Hugo": "voix masculine française, journaliste, ton posé, chaleureux et précis",
+    "Camille": "voix féminine française, journaliste économie, ton clair et pédagogue",
+    "Thomas": "voix masculine française, journaliste tech, ton enthousiaste mais mesuré",
+    "Inès": "voix féminine française, journaliste jeux vidéo, ton enjoué",
+    "Julien": "voix masculine française, journaliste social, ton calme et concret",
+    "Nadia": "voix féminine française, journaliste locale, ton chaleureux et curieux",
 }
 STYLE_DEFAUT = "voix française de journaliste radio, ton naturel et chaleureux"
 
@@ -40,7 +53,7 @@ def _locuteurs(turns):
     if len(vus) > 2:
         raise ValueError(f"plus de deux voix dans un même morceau : {vus}")
     if len(vus) == 1:  # le mode dialogue attend deux voix : on en déclare une seconde, inutilisée
-        vus.append("Léa" if vus[0] != "Léa" else "Hugo")
+        vus.append("Robin" if vus[0] != "Robin" else "L")
     return {w: VOIX.get(w, VOIX_DEFAUT) for w in vus}
 
 CONSIGNE = ("Émission d'actualité matinale en français de France : la présentatrice échange avec un ou une collègue de la rédaction qu'elle connaît bien. "
