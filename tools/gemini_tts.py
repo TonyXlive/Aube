@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Synthèse d'un dialogue à deux voix avec Gemini TTS (mode conversationnel natif).
+"""Synthèse d'un dialogue (deux voix par morceau) avec Gemini TTS (mode conversationnel natif).
 
 Utilisé par tools/podcast.py avec --engine gemini. Clé lue dans GEMINI_API_KEY.
 Essaie d'abord l'API Interactions (modèles 3.8), puis l'ancien format generateContent.
@@ -8,12 +8,42 @@ import base64, io, json, os, re, sys, time, urllib.error, urllib.request, wave
 
 API = "https://generativelanguage.googleapis.com/v1beta"
 MODELES = [m for m in os.environ.get("GEMINI_TTS_MODELS", "gemini-3.8-flash-tts,gemini-3.8-flash-lite-tts,gemini-3.1-flash-tts-preview").split(",") if m]
-VOIX = {"Léa": os.environ.get("GEMINI_VOICE_A", "Aoede"), "Hugo": os.environ.get("GEMINI_VOICE_B", "Puck")}
-STYLE = {
-    "Léa": "voix féminine française, animatrice de matinale radio, ton détendu, souriant et complice, débit naturel avec de légères variations",
-    "Hugo": "voix masculine française, animateur de matinale radio, ton décontracté et chaleureux, curieux, débit naturel avec de légères variations",
+# La rédaction d'Aube : Léa présente, chaque rubrique a son chroniqueur et sa voix.
+# Gemini ne gère que 2 voix par requête : chaque morceau envoyé réunit Léa et UN chroniqueur.
+VOIX = {
+    "Léa": os.environ.get("GEMINI_VOICE_A", "Aoede"),
+    "Hugo": os.environ.get("GEMINI_VOICE_B", "Puck"),
+    "Camille": os.environ.get("GEMINI_VOICE_C", "Kore"),
+    "Thomas": os.environ.get("GEMINI_VOICE_D", "Charon"),
+    "Inès": os.environ.get("GEMINI_VOICE_E", "Leda"),
+    "Julien": os.environ.get("GEMINI_VOICE_F", "Orus"),
+    "Nadia": os.environ.get("GEMINI_VOICE_G", "Zephyr"),
 }
-CONSIGNE = ("Émission d'actualité matinale en français de France, entre deux animateurs qui se connaissent bien. "
+VOIX_DEFAUT = "Puck"
+STYLE = {
+    "Léa": "voix féminine française, présentatrice de matinale radio, ton détendu, souriant et complice, débit naturel avec de légères variations",
+    "Hugo": "voix masculine française, journaliste politique et international, ton posé, chaleureux et précis",
+    "Camille": "voix féminine française, journaliste économie et bourse, ton clair, vif et pédagogue",
+    "Thomas": "voix masculine française, journaliste tech, ton enthousiaste mais mesuré, curieux",
+    "Inès": "voix féminine française, journaliste jeux vidéo, ton enjoué, passionné et naturel",
+    "Julien": "voix masculine française, journaliste social et RH, ton calme, concret et rassurant",
+    "Nadia": "voix féminine française, journaliste locale et sciences, ton chaleureux, proche et curieux",
+}
+STYLE_DEFAUT = "voix française de journaliste radio, ton naturel et chaleureux"
+
+def _locuteurs(turns):
+    """Les voix présentes dans ce morceau (2 au maximum, limite de Gemini)."""
+    vus = []
+    for who, _, _ in turns:
+        if who not in vus:
+            vus.append(who)
+    if len(vus) > 2:
+        raise ValueError(f"plus de deux voix dans un même morceau : {vus}")
+    if len(vus) == 1:  # le mode dialogue attend deux voix : on en déclare une seconde, inutilisée
+        vus.append("Léa" if vus[0] != "Léa" else "Hugo")
+    return {w: VOIX.get(w, VOIX_DEFAUT) for w in vus}
+
+CONSIGNE = ("Émission d'actualité matinale en français de France : la présentatrice échange avec un ou une collègue de la rédaction qu'elle connaît bien. "
             "Conversation vivante et naturelle : vraies intonations de dialogue, petites respirations, "
             "relances spontanées, débit posé et détendu, jamais de ton de lecture.")
 
@@ -67,13 +97,13 @@ def _interactions(model, turns, key):
     # chaque morceau de texte doit porter son locuteur : la consigne générale va dans le style
     content = [{"type": "text", "text": t,
                 "annotations": [{"type": "speech_metadata", "speaker": who,
-                                 "style": (style + ", " if style else "") + STYLE[who] + ". " + CONSIGNE}]}
+                                 "style": (style + ", " if style else "") + STYLE.get(who, STYLE_DEFAUT) + ". " + CONSIGNE}]}
                for who, t, style in turns]
     body = {"model": model,
             "input": [{"type": "user_input", "content": content}],
             "response_format": {"type": "audio"},
             "generation_config": {"speech_config": {"mode": "conversational",
-                                                    "speakers": [{"speaker": s, "voice": v} for s, v in VOIX.items()]}}}
+                                                    "speakers": [{"speaker": s, "voice": v} for s, v in _locuteurs(turns).items()]}}}
     return _post(f"{API}/interactions", body, key)
 
 def _generate_content(model, turns, key):
@@ -81,13 +111,13 @@ def _generate_content(model, turns, key):
     body = {"contents": [{"parts": [{"text": texte}]}],
             "generationConfig": {"responseModalities": ["AUDIO"], "speechConfig": {"multiSpeakerVoiceConfig": {
                 "speakerVoiceConfigs": [{"speaker": s, "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": v}}}
-                                        for s, v in VOIX.items()]}}}}
+                                        for s, v in _locuteurs(turns).items()]}}}}
     return _post(f"{API}/models/{model}:generateContent", body, key)
 
 ETAT = {"ok": None, "erreurs": []}  # mémorise la combinaison qui marche pour les chapitres suivants
 
 def dialogue(turns, path, modeles=None):
-    """turns : liste de (« Léa » | « Hugo », texte, style ou None). Écrit un WAV.
+    """turns : liste de (nom du locuteur, texte, style ou None), deux locuteurs au plus. Écrit un WAV.
     modeles : limite les modèles autorisés (pour garder le même modèle sur tout l'épisode)."""
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:

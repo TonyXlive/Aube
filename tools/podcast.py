@@ -121,11 +121,16 @@ def light(t):
     t = t.replace(" – ", ", ").replace(" — ", ", ")
     return re.sub(r"\s+", " ", t).strip()
 
+def hosts_of(ed):
+    return (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
+
 def script_chapters(ed):
-    """Script radio écrit par l'IA : {"chapters":[{"title":..,"lines":[{"who":"A","text":..}]}]}"""
+    """Script radio écrit par l'IA : {"hosts":{"A":"Léa",...},"chapters":[{"title":..,"lines":[{"who":"A","text":..}]}]}
+    "A" est la présentatrice ; les autres lettres sont les chroniqueurs de la rédaction."""
+    hosts = hosts_of(ed)
     out = []
     for c in (ed.get("script") or {}).get("chapters", []):
-        lines = [(l.get("who", "A") if l.get("who") in ("A", "B") else "A", l.get("text", ""), l.get("style")) for l in c.get("lines", []) if l.get("text")]
+        lines = [(l.get("who") if l.get("who") in hosts else "A", l.get("text", ""), l.get("style")) for l in c.get("lines", []) if l.get("text")]
         if lines:
             out.append((c.get("title") or "Chapitre", lines))
     return out
@@ -180,20 +185,22 @@ def _gemini_episode(scripted, ed, tmp, max_mots, modeles):
     à l'intérieur d'un morceau : les chapitres internes deviennent de simples repères de temps
     (placés sur le silence le plus proche), ce qui évite toute coupure au milieu d'un mot."""
     import gemini_tts
-    nom = {"A": "Léa", "B": "Hugo"}
-    groupes, cur, n = [], [], 0
+    nom = hosts_of(ed)
+    # un morceau = des chapitres consécutifs avec au plus deux voix (limite de Gemini)
+    groupes, cur, n, voix = [], [], 0, set()
     for i, (title, lines) in enumerate(scripted):
         mots = sum(len(x.split()) for _, x, _ in lines)
-        if cur and n + mots > max_mots:
-            groupes.append(cur); cur, n = [], 0
-        cur.append(i); n += mots
+        v = {w for w, _, _ in lines}
+        if cur and (n + mots > max_mots or len(voix | v) > 2):
+            groupes.append(cur); cur, n, voix = [], 0, set()
+        cur.append(i); n += mots; voix |= v
     if cur:
         groupes.append(cur)
     print(f"  gemini : {len(scripted)} chapitres en {len(groupes)} requêtes", file=sys.stderr)
     plan = {}
     for g, idx in enumerate(groupes):
         # pas d'indication de jeu par réplique : elles font varier le timbre des voix
-        turns = [(nom[w], x.strip(), None) for i in idx for w, x, _ in scripted[i][1]]
+        turns = [(nom.get(w, w), x.strip(), None) for i in idx for w, x, _ in scripted[i][1]]
         brut = os.path.join(tmp, f"g{g}_brut.wav")
         MODELE_OK.add(gemini_tts.dialogue(turns, brut, modeles))
         total = wav_dur(brut)
@@ -257,7 +264,7 @@ def main():
                 kind, val = pre[i]
                 if kind == "mark":  # chapitre interne à un morceau : simple repère, pas de coupe
                     entry = {"t": round(gstart + val, 2), "title": title, "text": " ".join(light(x) for _, x, _ in lines)}
-                    hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
+                    hosts = hosts_of(ed)
                     entry["lines"] = [[hosts.get(w, w), light(x)] for w, x, _ in lines]
                     meta.append(entry)
                     continue
@@ -283,7 +290,7 @@ def main():
         gstart = t
         entry = {"t": round(t, 2), "title": title, "text": " ".join(x for x in lines if x)}
         if scripted:
-            hosts = (ed.get("script") or {}).get("hosts") or {"A": "Léa", "B": "Hugo"}
+            hosts = hosts_of(ed)
             entry["lines"] = [[hosts.get(w, w), light(x)] for w, x, _ in scripted[i][1]]
         meta.append(entry)
         parts += [p, sil]

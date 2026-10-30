@@ -1,5 +1,5 @@
 // Aube service worker — shell en cache, éditions en "réseau d'abord"
-const VERSION = 'aube-v3';
+const VERSION = 'aube-v4';
 const AUDIO = 'aube-audio';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/favicon.png'];
 self.addEventListener('install', e => {
