@@ -3,13 +3,14 @@ name: Publier Aube
 # À chaque nouvelle édition : enregistre l'émission avec Gemini TTS (Robin + un chroniqueur par morceau,
 # offre gratuite : 10 requêtes/jour/modèle, un épisode en consomme environ 8).
 # Si Gemini échoue, la version de secours open source (Piper) générée la nuit reste en place,
-# et une nouvelle tentative est faite à 6h30 (heure de Paris).
+# et de nouvelles tentatives sont faites à 6h30 et vers 9h30 (heure de Paris), après la remise à zéro du quota.
 # GitHub Pages republie ensuite le site tout seul.
 on:
   push:
     branches: [main]
   schedule:
     - cron: "30 4 * * *"
+    - cron: "30 8 * * *"  # après la remise à zéro du quota gratuit Gemini (9h30 à Paris en hiver)
   workflow_dispatch:
 
 permissions:

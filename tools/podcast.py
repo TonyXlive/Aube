@@ -4,7 +4,7 @@
 Usage : python3 tools/podcast.py editions/AAAA-MM-JJ.json --voice chemin/voix.onnx
 Écrit podcast/AAAA-MM-JJ.ogg et ajoute un bloc "podcast" dans l'édition.
 """
-import argparse, json, os, re, subprocess, sys, tempfile, wave
+import argparse, json, os, re, subprocess, sys, tempfile, time, wave
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from datetime import date
 
@@ -14,7 +14,7 @@ CATS = [("une", "À la une"), ("monde", "Monde"), ("france", "France"), ("local"
         ("sciences", "Sciences"), ("sport", "Sport"), ("culture", "Culture")]
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
-WORDS = {"CAC": "CAC", "OTAN": "Otan", "ONU": "ONU", "URSSAF": "Urssaf", "NASA": "Nasa", "OL": "O L", "PSG": "PSG",
+WORDS = {"Robin": "Robine", "CAC": "CAC", "OTAN": "Otan", "ONU": "ONU", "URSSAF": "Urssaf", "NASA": "Nasa", "OL": "O L", "PSG": "PSG",
          "AI": "A I", "IA": "I A", "TCL": "T C L", "SNCF": "S N C F", "DSN": "D S N", "PIB": "P I B", "APL": "A P L",
          "BTS": "B T S", "BCE": "B C E", "PPV": "P P V", "RTT": "R T T", "PLF": "P L F", "PLFSS": "P L F S S",
          "SIRH": "S I R H", "RH": "R H", "PDG": "P D G", "AMOLED": "amoled", "PASS": "pass", "RGDU": "R G D U",
@@ -303,7 +303,10 @@ def main():
     lst = os.path.join(tmp, "list.txt")
     with open(lst, "w") as f:
         f.writelines(f"file '{p}'\n" for p in norm_parts)
-    out = os.path.join(a.out_dir, ed["date"] + {"gemini": "-g.ogg"}.get(a.engine, ".ogg"))
+    # nom unique à chaque enregistrement : l'appli met l'audio en cache selon son adresse,
+    # un nouveau nom garantit que le téléphone télécharge bien la nouvelle version
+    stamp = format(int(time.time()) % 1679616, "x")
+    out = os.path.join(a.out_dir, ed["date"] + {"gemini": "-g"}.get(a.engine, "") + "-" + stamp + ".ogg")
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", lst,
                     "-af", "loudnorm=I=-16:TP=-1.5:LRA=11", "-ac", "1", "-ar", "24000",
                     "-c:a", "libopus", "-b:a", a.bitrate, "-application", "voip", out], check=True)

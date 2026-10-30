@@ -115,7 +115,7 @@ def _interactions(model, turns, key):
     body = {"model": model,
             "input": [{"type": "user_input", "content": content}],
             "response_format": {"type": "audio"},
-            "generation_config": {"speech_config": {"mode": "conversational",
+            "generation_config": {"speech_config": {
                                                     "speakers": [{"speaker": s, "voice": v} for s, v in _locuteurs(turns).items()]}}}
     return _post(f"{API}/interactions", body, key)
 
@@ -127,11 +127,15 @@ def _generate_content(model, turns, key):
                                         for s, v in _locuteurs(turns).items()]}}}}
     return _post(f"{API}/models/{model}:generateContent", body, key)
 
+PRONONCER = re.compile(r"\bRobin\b")
+
 ETAT = {"ok": None, "erreurs": []}  # mémorise la combinaison qui marche pour les chapitres suivants
 
 def dialogue(turns, path, modeles=None):
     """turns : liste de (nom du locuteur, texte, style ou None), deux locuteurs au plus. Écrit un WAV.
     modeles : limite les modèles autorisés (pour garder le même modèle sur tout l'épisode)."""
+    # prononciation : la présentatrice Robin se prononce « Robine »
+    turns = [(who, PRONONCER.sub("Robine", t), st) for who, t, st in turns]
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY absente")
