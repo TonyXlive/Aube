@@ -3,7 +3,6 @@
  "engine": "gemini",
  "ok": true,
  "errors": [
-  "gemini-3.8-flash-tts/interactions HTTP 400 {\"error\":{\"message\":\"Unknown parameter 'mode' at 'generation_config.structured_speech_config'.\",\"code\":\"invalid_request\"}}",
-  "gemini-3.8-flash-lite-tts/interactions HTTP 400 {\"error\":{\"message\":\"Unknown parameter 'mode' at 'generation_config.structured_speech_config'.\",\"code\":\"invalid_request\"}}"
+  "gemini-3.8-flash-tts/interactions HTTP 503 {\"error\":{\"message\":\"gemini-3.8-flash-tts is currently experiencing high demand, spikes in demand are usually temporary. Please try again later.\",\"code\":\"service_unavailable\"}}"
  ]
 }
