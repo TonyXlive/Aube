@@ -14,7 +14,7 @@ CATS = [("une", "À la une"), ("monde", "Monde"), ("france", "France"), ("local"
         ("sciences", "Sciences"), ("sport", "Sport"), ("culture", "Culture")]
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 MOIS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
-WORDS = {"Robin": "Robine", "CAC": "CAC", "OTAN": "Otan", "ONU": "ONU", "URSSAF": "Urssaf", "NASA": "Nasa", "OL": "O L", "PSG": "PSG",
+WORDS = {"Robin": "Robine", "Levi": "Livaï", "Senku": "Senkou", "CAC": "CAC", "OTAN": "Otan", "ONU": "ONU", "URSSAF": "Urssaf", "NASA": "Nasa", "OL": "O L", "PSG": "PSG",
          "AI": "A I", "IA": "I A", "TCL": "T C L", "SNCF": "S N C F", "DSN": "D S N", "PIB": "P I B", "APL": "A P L",
          "BTS": "B T S", "BCE": "B C E", "PPV": "P P V", "RTT": "R T T", "PLF": "P L F", "PLFSS": "P L F S S",
          "SIRH": "S I R H", "RH": "R H", "PDG": "P D G", "AMOLED": "amoled", "PASS": "pass", "RGDU": "R G D U",

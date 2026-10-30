@@ -14,7 +14,7 @@ VOIX = {
     # rédaction actuelle (personnages de manga) : voix Gemini choisies pour coller au caractère
     "Robin": "Gacrux",       # présentatrice
     "L": "Schedar",          # actu France et monde
-    "Nami": "Laomedeia",     # économie et bourse
+    "Nami": "Zephyr",        # économie et bourse
     "Bulma": "Autonoe",      # tech, IA, Nothing
     "Shiro": "Leda",         # jeux vidéo
     "Levi": "Alnilam",       # paie, RH, SIRH
@@ -28,7 +28,7 @@ VOIX_DEFAUT = "Puck"
 STYLE = {
     "Robin": "voix féminine française posée et mature, présentatrice de matinale, calme, cultivée, légèrement amusée, chaleureuse",
     "L": "voix masculine française, ton plutôt monocorde et réfléchi, analytique, phrases précises, pointe d'ironie discrète",
-    "Nami": "voix féminine française vive et énergique, débrouillarde, s'anime dès qu'on parle d'argent",
+    "Nami": "voix féminine française aiguë, charmeuse et espiègle, très enjouée, intonations chantantes et pleines d'énergie, sourire dans la voix, s'emballe dès qu'on parle d'argent",
     "Bulma": "voix féminine française pétillante et sûre d'elle, ingénieure passionnée de technologie, franche",
     "Shiro": "voix féminine française jeune, douce et calme, parle peu mais devient passionnée quand il s'agit de jeux",
     "Levi": "voix masculine française grave, sèche et froide, phrases courtes, très carré, un humour pince-sans-rire",
@@ -127,15 +127,19 @@ def _generate_content(model, turns, key):
                                         for s, v in _locuteurs(turns).items()]}}}}
     return _post(f"{API}/models/{model}:generateContent", body, key)
 
-PRONONCER = re.compile(r"\bRobin\b")
+PRONONCIATION = {"Robin": "Robine", "Levi": "Livaï", "Senku": "Senkou"}
+PRONONCER = re.compile(r"\b(" + "|".join(PRONONCIATION) + r")\b")
+
+def prononcer(t):
+    return PRONONCER.sub(lambda m: PRONONCIATION[m.group(1)], t)
 
 ETAT = {"ok": None, "erreurs": []}  # mémorise la combinaison qui marche pour les chapitres suivants
 
 def dialogue(turns, path, modeles=None):
     """turns : liste de (nom du locuteur, texte, style ou None), deux locuteurs au plus. Écrit un WAV.
     modeles : limite les modèles autorisés (pour garder le même modèle sur tout l'épisode)."""
-    # prononciation : la présentatrice Robin se prononce « Robine »
-    turns = [(who, PRONONCER.sub("Robine", t), st) for who, t, st in turns]
+    # prononciation des noms (le texte affiché dans l'appli garde l'orthographe d'origine)
+    turns = [(who, prononcer(t), st) for who, t, st in turns]
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise RuntimeError("GEMINI_API_KEY absente")
